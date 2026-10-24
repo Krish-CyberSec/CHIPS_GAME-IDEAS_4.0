@@ -11,10 +11,12 @@ const INITIAL_STATE: MouthTrackingState = { detected: false, reliable: false, x:
 const PUBLISH_INTERVAL_MS = 32;
 const TRACKING_GRACE_MS = 650;
 
+// Shared vision singletons keep the camera stream and loaded model alive across page transitions
+const sharedCamera = new CameraService();
+const sharedLandmarker = new FaceLandmarkerService();
+const sharedMouth = new MouthDetectionService();
+
 export function useWebcamVision(videoRef: RefObject<HTMLVideoElement | null>) {
-  const camera = useRef(new CameraService());
-  const landmarker = useRef(new FaceLandmarkerService());
-  const mouth = useRef(new MouthDetectionService());
   const calibration = useRef(new CalibrationService());
   const frame = useRef<number | null>(null);
   const [state, setState] = useState<MouthTrackingState>(INITIAL_STATE);
@@ -39,24 +41,22 @@ export function useWebcamVision(videoRef: RefObject<HTMLVideoElement | null>) {
   }, []);
 
   const scheduleNextFrame = useCallback(() => {
-    if (frame.current === null && camera.current.active) frame.current = requestAnimationFrame(() => { frame.current = null; tickRef.current(); });
+    if (frame.current === null && sharedCamera.active) frame.current = requestAnimationFrame(() => { frame.current = null; tickRef.current(); });
   }, []);
 
   const tick = useCallback(() => {
     const video = videoRef.current;
-    if (!video || !camera.current.active) {
+    if (!video || !sharedCamera.active) {
       setVisionMessage('idle');
       return;
     }
-    const result = mouth.current.estimate(landmarker.current.detect(video));
+    const result = sharedMouth.estimate(sharedLandmarker.detect(video));
     const now = performance.now();
     let effectiveState = result;
     if (result.reliable) {
       lastReliableState.current = result;
       lastReliableAt.current = now;
     } else if (lastReliableState.current && now - lastReliableAt.current < TRACKING_GRACE_MS) {
-      // Keep the last mouth position for a short camera/model hiccup. The mouth
-      // is explicitly closed during grace so a stale frame cannot bite a chip.
       effectiveState = { ...lastReliableState.current, detected: false, reliable: true, isOpen: false, openness: 0, confidence: Math.min(lastReliableState.current.confidence, .45), timestamp: now };
     }
     latestState.current = effectiveState;
@@ -71,17 +71,18 @@ export function useWebcamVision(videoRef: RefObject<HTMLVideoElement | null>) {
   }, [scheduleNextFrame, setVisionMessage, videoRef]);
   useEffect(() => { tickRef.current = tick; }, [tick]);
 
-  const stop = useCallback(() => {
+  const detach = useCallback(() => {
     generation.current += 1;
     if (frame.current !== null) cancelAnimationFrame(frame.current);
     frame.current = null;
     startPromise.current = null;
-    camera.current.stop(videoRef.current ?? undefined);
-    landmarker.current.close();
-    mouth.current.reset();
     lastReliableState.current = null;
     lastReliableAt.current = 0;
     modelReadyRef.current = false;
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.srcObject = null;
+    }
     if (mounted.current) {
       setModelReady(false);
       setCalibrationResult(null);
@@ -91,20 +92,23 @@ export function useWebcamVision(videoRef: RefObject<HTMLVideoElement | null>) {
     }
   }, [setVisionMessage, videoRef]);
 
+  const stop = useCallback(() => {
+    detach();
+    sharedCamera.stop();
+    sharedLandmarker.close();
+    sharedMouth.reset();
+  }, [detach]);
+
   const start = useCallback(async () => {
     const video = videoRef.current;
     if (!video) throw new Error('Camera preview is not ready.');
     if (startPromise.current) return startPromise.current;
-    if (camera.current.active && modelReadyRef.current) {
-      scheduleNextFrame();
-      return;
-    }
     const run = ++generation.current;
     const pending = (async () => {
       setVisionMessage('loading-camera');
       try {
-        const stream = await camera.current.start(video);
-        if (run !== generation.current || videoRef.current !== video) { camera.current.stopStream(stream, video); return; }
+        await sharedCamera.start(video);
+        if (run !== generation.current || videoRef.current !== video) return;
       } catch (error) {
         if (run !== generation.current) return;
         setVisionMessage(error instanceof DOMException && error.name === 'NotAllowedError' ? 'permission-denied' : 'camera-error');
@@ -113,17 +117,13 @@ export function useWebcamVision(videoRef: RefObject<HTMLVideoElement | null>) {
       if (run !== generation.current) return;
       setVisionMessage('loading-model');
       try {
-        await landmarker.current.initialize();
+        await sharedLandmarker.initialize();
       } catch (error) {
         setVisionMessage('model-error');
-        camera.current.stop(video);
+        sharedCamera.stop(video);
         throw error;
       }
-      if (run !== generation.current) {
-        camera.current.stop(video);
-        landmarker.current.close();
-        return;
-      }
+      if (run !== generation.current) return;
       modelReadyRef.current = true;
       if (mounted.current) setModelReady(true);
       scheduleNextFrame();
@@ -135,13 +135,13 @@ export function useWebcamVision(videoRef: RefObject<HTMLVideoElement | null>) {
 
   const applyCalibration = useCallback((result: CalibrationResult) => {
     if (!Number.isFinite(result.threshold) || !Number.isFinite(result.closeThreshold) || result.threshold <= 0) return false;
-    mouth.current.setThreshold(result.threshold, result.closeThreshold);
+    sharedMouth.setThreshold(result.threshold, result.closeThreshold);
     if (mounted.current) setCalibrationResult(result);
     return true;
   }, []);
 
   const startCalibration = useCallback(async (onPhase?: (phase: 'closed' | 'open') => void, durationMs = 2600) => {
-    if (!modelReadyRef.current || !camera.current.active) throw new Error('The camera and model must be ready before calibration.');
+    if (!modelReadyRef.current || !sharedCamera.active) throw new Error('The camera and model must be ready before calibration.');
     calibration.current.reset();
     if (mounted.current) setCalibrationResult(null);
     onPhase?.('closed');
@@ -157,7 +157,7 @@ export function useWebcamVision(videoRef: RefObject<HTMLVideoElement | null>) {
     await collect((value) => calibration.current.addOpenSample(value), performance.now());
     const result = calibration.current.result();
     if (!result) throw new Error('Calibration needs a stable face and a clearly wider, comfortable open-mouth sample.');
-    mouth.current.setThreshold(result.threshold, result.closeThreshold);
+    sharedMouth.setThreshold(result.threshold, result.closeThreshold);
     if (mounted.current) setCalibrationResult(result);
     return result;
   }, []);
@@ -166,9 +166,9 @@ export function useWebcamVision(videoRef: RefObject<HTMLVideoElement | null>) {
     mounted.current = true;
     return () => {
       mounted.current = false;
-      stop();
+      detach();
     };
-  }, [stop]);
+  }, [detach]);
 
-  return { state, message, modelReady, calibrationResult, start, stop, startCalibration, applyCalibration };
+  return { state, message, modelReady, calibrationResult, start, stop, detach, startCalibration, applyCalibration };
 }
