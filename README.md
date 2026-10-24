@@ -1,102 +1,174 @@
 # Chip Bite Challenge
 
-Chip Bite Challenge is a webcam-controlled browser arcade game for Class 11–12 students and college-fest visitors. Players see a mirrored camera preview, move their head toward falling virtual chips, and open their mouth to capture them. Camera frames stay in the browser; the backend receives completed score data only when connected mode is configured.
+An interactive, webcam-driven arcade game where your face and mouth movements control gameplay in real-time.
 
-## Implemented features
+[![React](https://img.shields.io/badge/Frontend-React%2018%20%2B%20TypeScript-blue?logo=react)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Bundler-Vite-646CFF?logo=vite)](https://vitejs.dev/)
+[![Phaser 3](https://img.shields.io/badge/Engine-Phaser%203-brightgreen)](https://phaser.io/)
+[![MediaPipe](https://img.shields.io/badge/Vision-MediaPipe%20Tasks-orange?logo=google)](https://developers.google.com/mediapipe)
+[![Tests](https://img.shields.io/badge/Tests-Vitest%20%2B%20xUnit-green)](https://vitest.dev/)
 
-- React + TypeScript + Vite frontend with Tailwind CSS and Phaser 3 game rendering.
-- Home, How to Play, Player Setup, Gameplay, Results, Leaderboard, Profile, and Operator screens.
-- Webcam permission flow, camera preview, MediaPipe Tasks Vision face-landmarker service, mouth-openness calibration, smoothing, tracking-loss pause, and cleanup.
-- Webcam-only face tracking with mouth calibration and local processing.
-- Normal, golden, speed, frozen, combo, bomb, mystery, and power-up objects.
-- Combo multipliers, score protection, slow motion, magnet, double score, and extra-time effects.
-- Local-first result, profile, achievement, and leaderboard persistence.
-- ASP.NET Core 8 Web API with EF Core SQL Server support, in-memory development fallback, JWT-protected operator endpoints, Swagger, and an initial migration.
-- Vitest frontend tests and xUnit backend service tests.
+---
 
-## Prerequisites
+**Chip Bite Challenge** transforms physical head and mouth gestures into arcade mechanics. Players use head positioning to align with falling virtual chips and open their mouth to "bite" them.
 
-- Node.js 24.14.0 and npm 11.9.0 (or a compatible modern Node release).
-- .NET SDK 8.0.425 or compatible .NET 8 SDK.
-- A modern browser for webcam mode. Camera access requires `localhost` or HTTPS.
-- SQL Server is optional for connected mode; local browser gameplay and the API's in-memory development mode do not require it.
+All facial landmark detection occurs **100% locally in your browser** via MediaPipe Tasks Vision. Video frames are never recorded or sent over the network.
 
-## Run the frontend
-
-```powershell
-cd frontend
-npm install
-Copy-Item .env.example .env
-npm run dev
+```mermaid
+flowchart LR
+    A[Webcam Feed] --> B[MediaPipe Vision]
+    B --> C[Facial Landmarks]
+    C --> D[Mouth Detection & Normalization]
+    D --> E[Phaser 3 Game Engine]
+    E --> F[Score, Combos & Power-ups]
+    F --> G[Local Storage / Optional API]
 ```
 
-Open `http://localhost:5173`.
+---
 
-The frontend defaults to official MediaPipe WASM/model URLs. For offline or controlled deployment, download the Face Landmarker model and WASM assets into a local public path, then set `VITE_MEDIAPIPE_WASM_URL` and `VITE_FACE_LANDMARKER_MODEL_URL` in `.env`. The model is loaded only after the player activates the camera check.
+## Features
 
-## Run the backend
+- **Gesture-Based Gameplay**: Move your head left/right to aim; open your mouth to bite.
+- **Privacy First**: Video frames and facial landmarks stay completely inside client browser memory.
+- **Tilt-Resistant Tracking**: Normalizes mouth openness against lip width to prevent false triggers when tilting head up.
+- **Live Calibration Meter**: Real-time openness gauge with visual bite threshold indicator before entering the arena.
+- **Dynamic Chip Mechanics**:
+  - **Normal & Golden Chips**: Standard points and high-value multipliers.
+  - **Speed & Combo Chips**: Multipliers and streak boosters.
+  - **Frozen Chips**: Slows down game tempo.
+  - **Bombs**: Penalties and combo breakers to dodge.
+  - **Power-Ups**: Magnet, shield, double score, and extra time.
+- **Local-First Persistence**: Instant local leaderboard, profiles, and achievement unlocks.
+- **Connected Mode (Optional)**: ASP.NET Core 8 Web API with SQL Server / in-memory fallback for college-fest kiosks.
 
-```powershell
+---
+
+## Architecture
+
+```mermaid
+flowchart TD
+    subgraph CLIENT["Client Browser"]
+        UI["React + Tailwind UI"]
+        CAM["Camera Input"]
+        MP["MediaPipe Vision"]
+        DETECT["Mouth Detection"]
+        GAME["Phaser 3 Game Engine"]
+        STORE[("Local Storage")]
+
+        CAM --> MP --> DETECT --> GAME
+        UI <--> GAME
+        UI <--> STORE
+    end
+
+    subgraph BACKEND["Optional Backend · ASP.NET Core 8"]
+        API["Leaderboard API"]
+        DB[("SQL Server / In-Memory DB")]
+
+        API <--> DB
+    end
+
+    STORE -.->|"Sync Results"| API
+```
+
+---
+
+## Quick Start
+
+### Prerequisites
+- **Node.js**: v18+ (tested on Node 20 / 24)
+- **Modern Browser**: Chrome, Edge, Brave, or Firefox with webcam permission support
+
+### 1. Installation
+
+```bash
+# Install frontend dependencies from root
+npm install --prefix frontend
+```
+
+### 2. Configure Environment
+
+Copy the example environment file:
+
+```bash
+# Windows PowerShell:
+Copy-Item frontend/.env.example frontend/.env
+
+# macOS / Linux:
+cp frontend/.env.example frontend/.env
+```
+
+### 3. Start Development Server
+
+```bash
+npm run dev
+```
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+## How to Play
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Player
+    participant Setup as Setup Page
+    participant Vision as MediaPipe Vision
+    participant Arena as Game Arena
+
+    Player->>Setup: Enter nickname & grant webcam access
+    Setup->>Vision: Initialize Face Landmarker
+    Player->>Setup: Click "Calibrate mouth"
+    Note over Player,Setup: Phase 1: Relax mouth closed<br/>Phase 2: Open mouth wide
+    Setup-->>Player: Visual threshold & live meter confirmation
+    Player->>Arena: Click "Start game"
+    Arena->>Arena: 3-second countdown
+    loop Active Round (45s)
+        Vision-->>Arena: Track mouth position (X, Y) & open/closed state
+        Player->>Arena: Align head with falling chip + open mouth to bite
+        Arena-->>Player: Audio cue + score/combo update
+    end
+    Arena->>Player: Final score & achievement unlocks
+```
+
+---
+
+## Testing & Verification
+
+```bash
+# Run unit & integration tests
+npm test
+
+# Run TypeScript check & production build
+npm run build
+
+# Run linter
+npm run lint
+```
+
+---
+
+## Connected Backend (Optional)
+
+The backend is completely optional. If you want to run the ASP.NET Core API for centralized tournament leaderboards:
+
+### Prerequisites
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+
+### Run API
+```bash
 dotnet run --project backend/ChipBiteChallenge.API --urls http://localhost:5080
 ```
 
-The API health check is available at `http://localhost:5080/api/health`; Swagger is available in Development at `http://localhost:5080/swagger`.
+- Swagger UI available at `http://localhost:5080/swagger`
+- Health check available at `http://localhost:5080/api/health`
 
-For connected frontend persistence, set `VITE_API_BASE_URL=http://localhost:5080` in `frontend/.env`.
+---
 
-## SQL Server configuration and migration
+## Privacy & Performance Notes
 
-The API uses an in-memory database when `ConnectionStrings:SqlServer` is absent. For SQL Server, configure the connection string without committing credentials:
+- **Zero Video Uploads**: Camera streams are piped into a hidden HTML `<video>` element and evaluated in-memory using WebGL/WebGPU shaders. No images are sent to any remote servers.
+- **Offline Model Support**: By default, MediaPipe models load from Google's CDN. For offline events, place `face_landmarker.task` in `frontend/public/` and configure `VITE_FACE_LANDMARKER_MODEL_URL` in `.env`.
 
-```powershell
-dotnet user-secrets --project backend/ChipBiteChallenge.API init
-dotnet user-secrets --project backend/ChipBiteChallenge.API set "ConnectionStrings:SqlServer" "Server=localhost;Database=ChipBiteChallenge;Trusted_Connection=True;TrustServerCertificate=True"
-dotnet user-secrets --project backend/ChipBiteChallenge.API set "Jwt:Key" "replace-with-a-random-secret-at-least-32-characters"
-dotnet user-secrets --project backend/ChipBiteChallenge.API set "Admin:Password" "replace-locally"
-dotnet ef database update --project backend/ChipBiteChallenge.API --startup-project backend/ChipBiteChallenge.API
-```
-
-The initial migration is `InitialCreate` under `backend/ChipBiteChallenge.API/Data/Migrations`.
-
-## Test and build commands
-
-```powershell
-cd frontend
-npm run build
-npm test
-npm run lint
-
-cd ..
-dotnet build backend/ChipBiteChallenge.sln
-dotnet test backend/ChipBiteChallenge.sln --no-restore
-```
-
-## Webcam setup
-
-1. Open the site on `localhost` or HTTPS.
-2. Select **Play now** and enter a nickname.
-3. Allow camera permission only when prompted.
-4. The full camera frame is valid; the dashed guide is only a comfort reference.
-5. Calibrate with a relaxed closed mouth followed by a comfortable open mouth.
-6. Start the round. Captures are valid only when a reliable face track, an open mouth, and chip overlap are all present.
-
-If camera or model loading fails, the game stops safely and explains the camera issue. The game never fabricates face detection success.
-
-## College-fest runbook
-
-1. Use a laptop connected to a large display and speakers.
-2. Put the webcam at face height and mark the player position on the floor.
-3. Start the frontend and API, then open the frontend in a full-screen browser tab.
-4. Use the Operator screen to review local results and export CSV after the event.
-5. Keep the webcam at face height and ensure the full face is visible for lighting and tracking stability.
-6. Reset the local leaderboard before a new session only after confirming the operator dialog.
-
-## Privacy and known limitations
-
-- Camera frames and facial landmarks are processed in the browser and are not uploaded by the frontend.
-- Completed result summaries can be submitted to the API; use local-only mode when the backend is not trusted or available.
-- The default MediaPipe model/WASM configuration uses official remote assets. Offline deployments must host the assets locally.
-- Actual webcam verification requires a camera, browser permission, lighting, and the model assets; automated tests use deterministic mocked landmarks.
-- The frontend production bundle currently contains Phaser and is large; code splitting is a future optimization.
-
-See `docs/` for architecture, requirements, API, database, security, testing, and development details.
+## Info
+- Made for IDEAS 4.0 by Krish Kumar & Prabhat Bhatia
