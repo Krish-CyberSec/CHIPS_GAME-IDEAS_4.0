@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChipBiteChallenge.API", "ChipBiteChallenge.API\ChipBiteChallenge.API.csproj", "{8315C33C-E283-453C-8072-F05DB7230E59}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChipBiteChallenge.Tests", "ChipBiteChallenge.Tests\ChipBiteChallenge.Tests.csproj", "{27A0E0A1-0EAE-4461-A3E7-38136838DE4A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8315C33C-E283-453C-8072-F05DB7230E59}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8315C33C-E283-453C-8072-F05DB7230E59}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8315C33C-E283-453C-8072-F05DB7230E59}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8315C33C-E283-453C-8072-F05DB7230E59}.Release|Any CPU.Build.0 = Release|Any CPU
+		{27A0E0A1-0EAE-4461-A3E7-38136838DE4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27A0E0A1-0EAE-4461-A3E7-38136838DE4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27A0E0A1-0EAE-4461-A3E7-38136838DE4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27A0E0A1-0EAE-4461-A3E7-38136838DE4A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

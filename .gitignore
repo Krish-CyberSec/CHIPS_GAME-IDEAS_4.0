@@ -1,0 +1,15 @@
+node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+backend/**/bin/
+backend/**/obj/
+backend/.vs/
+backend/**/appsettings.*.local.json
+backend/**/Properties/serviceDependencies.*
+*.user
+*.suo
+*.log
+.DS_Store

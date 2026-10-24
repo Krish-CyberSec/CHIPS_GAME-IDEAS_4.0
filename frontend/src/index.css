@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Inter', 'Space Grotesk', system-ui, sans-serif;
+  color: #f8f7ff;
+  background: #090817;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; background: #090817; }
+body { min-width: 320px; min-height: 100vh; margin: 0; background: #090817; overflow-x: hidden; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+
+@font-face {
+  font-family: 'FSP DEMO - PODIUM Sharp 4.11';
+  src: local('FSP DEMO - PODIUM Sharp 4.11');
+  font-display: swap;
+}
+
+.font-podium {
+  font-family: 'FSP DEMO - PODIUM Sharp 4.11', Inter, system-ui, sans-serif;
+}
+
+@keyframes cbc-fade-up {
+  from { opacity: 0; transform: translate3d(0, 30px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes cbc-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cbc-scale-in {
+  from { opacity: 0; transform: scale(.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.cbc-fade-up,
+.cbc-fade-in,
+.cbc-scale-in { opacity: 0; animation-fill-mode: forwards; }
+.cbc-fade-up { animation: cbc-fade-up .8s cubic-bezier(.22, 1, .36, 1) both; }
+.cbc-fade-in { animation: cbc-fade-in .8s ease both; }
+.cbc-scale-in { animation: cbc-scale-in .8s cubic-bezier(.22, 1, .36, 1) both; }
+
+@layer components {
+  .arcade-shell {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 12% 12%, rgba(80, 227, 255, .10), transparent 26rem),
+      radial-gradient(circle at 92% 8%, rgba(155, 123, 255, .12), transparent 28rem),
+      #090817;
+  }
+  .arcade-card {
+    @apply border border-white/10 bg-white/[0.045] backdrop-blur-sm;
+  }
+  .arcade-button {
+    @apply inline-flex items-center justify-center gap-2 border border-white/10 px-5 py-3 font-semibold transition duration-200;
+  }
+  .arcade-button:focus-visible, .arcade-icon-button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 3px solid rgba(80, 227, 255, .55);
+    outline-offset: 3px;
+  }
+  .arcade-button-primary {
+    @apply arcade-button bg-cyan text-ink shadow-glow hover:-translate-y-0.5 hover:bg-cyan/90;
+  }
+  .arcade-button-secondary {
+    @apply arcade-button bg-white/[0.07] text-white hover:bg-white/[0.12];
+  }
+  .arcade-button-danger {
+    @apply arcade-button bg-coral/15 text-coral hover:bg-coral/25;
+  }
+  .arcade-icon-button {
+    @apply inline-flex h-11 w-11 items-center justify-center border border-white/10 bg-white/[0.06] text-white/80 transition hover:bg-white/[0.12] hover:text-white;
+  }
+  .eyebrow { @apply font-mono text-[0.68rem] font-medium uppercase tracking-[0.22em] text-cyan; }
+  .muted { @apply text-sm leading-6 text-white/55; }
+  .mono { font-family: 'DM Mono', monospace; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .001ms !important; }
+}
