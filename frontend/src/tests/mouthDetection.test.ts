@@ -13,14 +13,17 @@ const makeLandmarks = (opening: number, center = .5) => {
 describe('mouth detection', () => {
   it('uses hysteresis so a slightly smaller opening does not immediately close', () => {
     const service = new MouthDetectionService();
-    service.setThreshold(.1, .07);
-    expect(service.estimate(makeLandmarks(.16)).isOpen).toBe(true);
+    // width between 61 and 291 is 0.16
+    // open 0.08 / 0.16 = 0.5 openness
+    // close 0.03 / 0.16 = 0.1875 openness
+    service.setThreshold(.45, .32);
     expect(service.estimate(makeLandmarks(.08)).isOpen).toBe(true);
-    for (let index = 0; index < 8; index += 1) service.estimate(makeLandmarks(.03));
-    expect(service.estimate(makeLandmarks(.03)).isOpen).toBe(false);
+    expect(service.estimate(makeLandmarks(.06)).isOpen).toBe(true);
+    for (let index = 0; index < 15; index += 1) service.estimate(makeLandmarks(.02));
+    expect(service.estimate(makeLandmarks(.02)).isOpen).toBe(false);
   });
 
-  it('normalizes openness against face height', () => {
+  it('normalizes openness against mouth width', () => {
     const service = new MouthDetectionService();
     const closed = service.estimate(makeLandmarks(.02));
     const open = service.estimate(makeLandmarks(.15));
@@ -40,7 +43,7 @@ describe('mouth detection', () => {
 describe('calibration', () => {
   it('creates separate open and close thresholds only with useful separation', () => {
     const service = new CalibrationService();
-    for (let index = 0; index < 10; index += 1) { service.addClosedSample(.04); service.addOpenSample(.16); }
+    for (let index = 0; index < 10; index += 1) { service.addClosedSample(.12); service.addOpenSample(.45); }
     const result = service.result();
     expect(result).not.toBeNull();
     expect(result!.closeThreshold).toBeLessThan(result!.threshold);
@@ -49,7 +52,7 @@ describe('calibration', () => {
 
   it('rejects a calibration with no meaningful mouth separation', () => {
     const service = new CalibrationService();
-    for (let index = 0; index < 10; index += 1) { service.addClosedSample(.08); service.addOpenSample(.081); }
+    for (let index = 0; index < 10; index += 1) { service.addClosedSample(.15); service.addOpenSample(.155); }
     expect(service.result()).toBeNull();
   });
 });

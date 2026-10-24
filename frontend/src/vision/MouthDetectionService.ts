@@ -2,7 +2,12 @@ import type { FaceLandmarkerResult } from '@mediapipe/tasks-vision';
 import type { MouthTrackingState } from '../types';
 
 const LANDMARKS = { upperLip: 13, lowerLip: 14, leftCorner: 61, rightCorner: 291, forehead: 10, chin: 152 };
-export const MOUTH_DETECTION_CONFIG = { smoothingAlpha: 0.35, openThreshold: 0.09, closeThresholdRatio: 0.78, minimumCalibrationSeparation: 0.018 } as const;
+export const MOUTH_DETECTION_CONFIG = {
+  smoothingAlpha: 0.35,
+  openThreshold: 0.28,
+  closeThresholdRatio: 0.78,
+  minimumCalibrationSeparation: 0.05,
+} as const;
 
 const distance = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
 const emptyState = (previous: MouthTrackingState | null, detected = false): MouthTrackingState => ({
@@ -42,8 +47,8 @@ export class MouthDetectionService {
     const faceTop = landmarks[LANDMARKS.forehead];
     const faceBottom = landmarks[LANDMARKS.chin];
     if (!upper || !lower || !left || !right || !faceTop || !faceBottom) return emptyState(this.previous, true);
-    const faceHeight = Math.max(distance(faceTop, faceBottom), 0.001);
-    const openness = distance(upper, lower) / faceHeight;
+    const mouthWidth = Math.max(distance(left, right), 0.001);
+    const openness = distance(upper, lower) / mouthWidth;
     const raw: MouthTrackingState = {
       detected: true,
       reliable: true,
