@@ -33,10 +33,10 @@ export function SetupPage() {
   const status = vision.message === 'ready' ? 'Tracking ready · move naturally' : vision.message === 'no-face' ? 'Camera live · looking across the full frame' : vision.message === 'multiple-faces' ? 'One face at a time, please' : vision.message === 'tracking-lost' ? 'Reacquiring face signal' : vision.message.replace('-', ' ');
 
   const currentOpenness = vision.state.openness;
-  const activeThreshold = vision.calibrationResult?.threshold ?? 0.09;
+  const activeThreshold = vision.calibrationResult?.threshold ?? 0.28;
   const isBiteTriggered = vision.state.isOpen;
-  const meterPercent = Math.min(100, Math.max(0, (currentOpenness / 0.25) * 100));
-  const thresholdPercent = Math.min(100, Math.max(0, (activeThreshold / 0.25) * 100));
+  const meterPercent = Math.min(100, Math.max(0, (currentOpenness / 0.8) * 100));
+  const thresholdPercent = Math.min(100, Math.max(0, (activeThreshold / 0.8) * 100));
 
   return <div className="mx-auto max-w-[1600px] px-6 py-12 sm:px-10 lg:px-16 lg:py-18">
     <Link to="/" className="inline-flex items-center gap-2 font-inter text-xs font-semibold uppercase tracking-[.18em] text-white/45 transition hover:text-white"><ArrowLeft size={15} /> Back to home</Link>
