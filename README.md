@@ -1,4 +1,4 @@
-# Chip Bite Challenge
+<h1 align="center">Chip Bite Challenge</h1>
 
 An interactive, webcam-driven arcade game where your face and mouth movements control gameplay in real-time.
 
