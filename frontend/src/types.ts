@@ -1,5 +1,7 @@
 export type ControlMode = 'webcam';
 
+export type ThemeMode = 'dark' | 'light';
+
 export type GameStatus = 'idle' | 'preparing' | 'calibrating' | 'countdown' | 'playing' | 'paused' | 'tracking-lost' | 'completed' | 'error';
 
 export type ChipKind = 'normal' | 'golden' | 'speed' | 'frozen' | 'combo' | 'bomb' | 'mystery';
@@ -18,6 +20,9 @@ export interface MouthTrackingState {
   confidence: number;
   mirrored: boolean;
   timestamp: number;
+  faceCount: number;
+  hasMultipleFaces: boolean;
+  targetValidated: boolean;
 }
 
 export interface CalibrationResult {
@@ -75,9 +80,11 @@ export interface Achievement {
 
 export interface GameSettings {
   mode: ControlMode;
+  theme: ThemeMode;
   soundEnabled: boolean;
   musicEnabled: boolean;
   reducedMotion: boolean;
+  faceSensitivity: number;
   calibrationResult: CalibrationResult | null;
 }
 

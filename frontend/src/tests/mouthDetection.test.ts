@@ -10,12 +10,25 @@ const makeLandmarks = (opening: number, center = .5) => {
   return { faceLandmarks: [landmarks] } as never;
 };
 
+const makeMultiFaceLandmarks = (primaryOpening: number, secondaryOpening: number) => {
+  // Primary face (centered, larger)
+  const primary = Array.from({ length: 300 }, () => ({ x: 0.5, y: 0.5, z: 0 }));
+  primary[10] = { x: 0.5, y: 0.1, z: 0 }; primary[152] = { x: 0.5, y: 0.9, z: 0 };
+  primary[61] = { x: 0.42, y: 0.55, z: 0 }; primary[291] = { x: 0.58, y: 0.55, z: 0 };
+  primary[13] = { x: 0.5, y: 0.55 - primaryOpening / 2, z: 0 }; primary[14] = { x: 0.5, y: 0.55 + primaryOpening / 2, z: 0 };
+
+  // Secondary face (off-center, smaller)
+  const secondary = Array.from({ length: 300 }, () => ({ x: 0.85, y: 0.35, z: 0 }));
+  secondary[10] = { x: 0.85, y: 0.25, z: 0 }; secondary[152] = { x: 0.85, y: 0.45, z: 0 };
+  secondary[61] = { x: 0.81, y: 0.38, z: 0 }; secondary[291] = { x: 0.89, y: 0.38, z: 0 };
+  secondary[13] = { x: 0.85, y: 0.38 - secondaryOpening / 2, z: 0 }; secondary[14] = { x: 0.85, y: 0.38 + secondaryOpening / 2, z: 0 };
+
+  return { faceLandmarks: [primary, secondary] } as never;
+};
+
 describe('mouth detection', () => {
   it('uses hysteresis so a slightly smaller opening does not immediately close', () => {
     const service = new MouthDetectionService();
-    // width between 61 and 291 is 0.16
-    // open 0.08 / 0.16 = 0.5 openness
-    // close 0.03 / 0.16 = 0.1875 openness
     service.setThreshold(.45, .32);
     expect(service.estimate(makeLandmarks(.08)).isOpen).toBe(true);
     expect(service.estimate(makeLandmarks(.06)).isOpen).toBe(true);
@@ -37,6 +50,33 @@ describe('mouth detection', () => {
     const state = service.estimate(makeLandmarks(.12, .12));
     expect(state.reliable).toBe(true);
     expect(state.x).toBeGreaterThan(.8); // mirrored left-edge camera position
+  });
+
+  it('performs target input validation when multiple users are on screen and locks on primary target', () => {
+    const service = new MouthDetectionService();
+    const state = service.estimate(makeMultiFaceLandmarks(.06, .02));
+    expect(state.reliable).toBe(true);
+    expect(state.faceCount).toBe(2);
+    expect(state.hasMultipleFaces).toBe(true);
+    expect(state.targetValidated).toBe(true);
+    // Verified tracking stays centered on primary face
+    expect(state.x).toBeCloseTo(0.5, 1);
+  });
+
+  it('adjusts bite detection sensitivity dynamically', () => {
+    const service = new MouthDetectionService();
+    service.setThreshold(0.35, 0.25);
+
+    // Medium opening that is normally below 0.35 threshold
+    // opening 0.04 / 0.16 = 0.25 openness
+    service.setSensitivity(1.0);
+    expect(service.estimate(makeLandmarks(0.04)).isOpen).toBe(false);
+
+    // With higher sensitivity (1.5x), lower threshold is needed so it triggers open!
+    service.reset();
+    service.setThreshold(0.35, 0.25);
+    service.setSensitivity(1.6);
+    expect(service.estimate(makeLandmarks(0.04)).isOpen).toBe(true);
   });
 });
 
