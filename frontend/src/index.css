@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,14 +16,9 @@ body { min-width: 320px; min-height: 100vh; margin: 0; background: #090817; over
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 
-@font-face {
-  font-family: 'FSP DEMO - PODIUM Sharp 4.11';
-  src: local('FSP DEMO - PODIUM Sharp 4.11');
-  font-display: swap;
-}
-
 .font-podium {
-  font-family: 'FSP DEMO - PODIUM Sharp 4.11', Inter, system-ui, sans-serif;
+  font-family: 'Anton', 'Space Grotesk', 'Impact', sans-serif;
+  letter-spacing: 0.025em;
 }
 
 @keyframes cbc-fade-up {
@@ -43,47 +37,46 @@ button { cursor: pointer; }
 }
 
 .cbc-fade-up,
-.cbc-fade-in,
-.cbc-scale-in { opacity: 0; animation-fill-mode: forwards; }
-.cbc-fade-up { animation: cbc-fade-up .8s cubic-bezier(.22, 1, .36, 1) both; }
-.cbc-fade-in { animation: cbc-fade-in .8s ease both; }
-.cbc-scale-in { animation: cbc-scale-in .8s cubic-bezier(.22, 1, .36, 1) both; }
-
-@layer components {
-  .arcade-shell {
-    min-height: 100vh;
-    background:
-      radial-gradient(circle at 12% 12%, rgba(80, 227, 255, .10), transparent 26rem),
-      radial-gradient(circle at 92% 8%, rgba(155, 123, 255, .12), transparent 28rem),
-      #090817;
-  }
-  .arcade-card {
-    @apply border border-white/10 bg-white/[0.045] backdrop-blur-sm;
-  }
-  .arcade-button {
-    @apply inline-flex items-center justify-center gap-2 border border-white/10 px-5 py-3 font-semibold transition duration-200;
-  }
-  .arcade-button:focus-visible, .arcade-icon-button:focus-visible, input:focus-visible, select:focus-visible {
-    outline: 3px solid rgba(80, 227, 255, .55);
-    outline-offset: 3px;
-  }
-  .arcade-button-primary {
-    @apply arcade-button bg-cyan text-ink shadow-glow hover:-translate-y-0.5 hover:bg-cyan/90;
-  }
-  .arcade-button-secondary {
-    @apply arcade-button bg-white/[0.07] text-white hover:bg-white/[0.12];
-  }
-  .arcade-button-danger {
-    @apply arcade-button bg-coral/15 text-coral hover:bg-coral/25;
-  }
-  .arcade-icon-button {
-    @apply inline-flex h-11 w-11 items-center justify-center border border-white/10 bg-white/[0.06] text-white/80 transition hover:bg-white/[0.12] hover:text-white;
-  }
-  .eyebrow { @apply font-mono text-[0.68rem] font-medium uppercase tracking-[0.22em] text-cyan; }
-  .muted { @apply text-sm leading-6 text-white/55; }
-  .mono { font-family: 'DM Mono', monospace; }
+.cbc-stagger-1,
+.cbc-stagger-2,
+.cbc-stagger-3,
+.cbc-stagger-4 {
+  animation: cbc-fade-up .7s cubic-bezier(.16, 1, .3, 1) both;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .001ms !important; }
+.cbc-stagger-1 { animation-delay: 80ms; }
+.cbc-stagger-2 { animation-delay: 160ms; }
+.cbc-stagger-3 { animation-delay: 240ms; }
+.cbc-stagger-4 { animation-delay: 320ms; }
+.cbc-scale-in { animation: cbc-scale-in .45s cubic-bezier(.16, 1, .3, 1) both; }
+.cbc-fade-in { animation: cbc-fade-in .35s ease-out both; }
+
+@layer components {
+  .arcade-card {
+    @apply border border-white/10 bg-panel/80 p-5 shadow-violet backdrop-blur-sm transition duration-200 hover:border-white/20;
+  }
+
+  .arcade-button-primary {
+    @apply inline-flex items-center justify-center gap-2 border border-cyan/40 bg-cyan px-5 py-3 font-semibold text-ink transition duration-200 hover:bg-cyan/90 hover:shadow-glow active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .arcade-button-secondary {
+    @apply inline-flex items-center justify-center gap-2 border border-white/10 px-5 py-3 font-semibold transition duration-200 hover:border-white/30 hover:bg-white/5 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .arcade-icon-button {
+    @apply flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/80 transition duration-200 hover:border-cyan/40 hover:text-cyan active:scale-95;
+  }
+
+  .badge-glow {
+    box-shadow: 0 0 16px rgba(80, 227, 255, 0.35);
+  }
+
+  .shadow-gold {
+    box-shadow: 0 0 24px rgba(255, 209, 102, 0.22);
+  }
+
+  .eyebrow { @apply font-mono text-[0.68rem] font-medium uppercase tracking-[0.22em] text-cyan; }
+
+  .mono { font-family: 'DM Mono', monospace; }
 }
