@@ -46,4 +46,12 @@ public sealed class AdminController(IConfiguration configuration, JwtTokenServic
         await db.SaveChangesAsync(cancellationToken);
         return NoContent();
     }
+
+    [Authorize(Roles = "Operator")]
+    [HttpPost("demo/reset")]
+    public async Task<IActionResult> ResetDemo(CancellationToken cancellationToken)
+    {
+        var removed = await results.ResetDemoDataAsync(cancellationToken);
+        return Ok(new { removedCount = removed });
+    }
 }

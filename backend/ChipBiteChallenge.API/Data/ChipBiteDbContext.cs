@@ -26,6 +26,9 @@ public sealed class ChipBiteDbContext(DbContextOptions<ChipBiteDbContext> option
         {
             entity.HasKey(item => item.Id);
             entity.Property(item => item.Nickname).HasMaxLength(18).IsRequired();
+            entity.Property(item => item.Email).HasMaxLength(256);
+            entity.Property(item => item.PhoneNumber).HasMaxLength(32);
+            entity.Property(item => item.ProfilePicture).HasMaxLength(300_000);
             entity.HasIndex(item => item.Nickname).IsUnique();
         });
         modelBuilder.Entity<Achievement>(entity => { entity.HasKey(item => item.Id); entity.Property(item => item.Title).HasMaxLength(80).IsRequired(); });

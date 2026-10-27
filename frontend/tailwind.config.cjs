@@ -8,7 +8,8 @@ module.exports = {
       fontFamily: {
         display: ['Space Grotesk', 'Inter', 'sans-serif'],
         inter: ['Inter', 'system-ui', 'sans-serif'],
-        podium: ['FSP DEMO - PODIUM Sharp 4.11', 'Inter', 'system-ui', 'sans-serif'],
+        podium: ['Bebas Neue', 'Oswald', 'PODIUM Sharp', 'Space Grotesk', 'Inter', 'sans-serif'],
+        score: ['Bebas Neue', 'Oswald', 'Space Grotesk', 'DM Mono', 'monospace', 'sans-serif'],
       },
     },
   },

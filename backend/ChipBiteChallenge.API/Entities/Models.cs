@@ -13,6 +13,7 @@ public sealed class GameResult
     public double? Accuracy { get; set; }
     public int XpEarned { get; set; }
     public string Mode { get; set; } = "webcam";
+    public bool IsDemo { get; set; } = false;
     public DateTime CreatedAtUtc { get; set; }
     public Guid PlayerProfileId { get; set; }
     public PlayerProfile PlayerProfile { get; set; } = null!;
@@ -22,6 +23,10 @@ public sealed class PlayerProfile
 {
     public Guid Id { get; set; }
     public string Nickname { get; set; } = string.Empty;
+    public string? Email { get; set; }
+    public string? PhoneNumber { get; set; }
+    public string? ProfilePicture { get; set; }
+    public bool IsDemo { get; set; } = false;
     public int TotalRounds { get; set; }
     public int BestScore { get; set; }
     public int TotalXp { get; set; }

@@ -7,7 +7,7 @@ import { getDifficultyProfile, getLevelForScore } from './difficulty';
 
 export interface GameInputProvider { getState: () => MouthTrackingState; }
 export interface GameEngineCallbacks { onHud: (hud: GameHud) => void; onTracking: (tracking: boolean) => void; onFinish: (result: GameResult) => void; }
-export interface GameHud { score: number; combo: number; multiplier: number; timeLeft: number; level: number; levelStartScore: number; nextLevelScore: number; captured: number; golden: number; bombs: number; missed: number; activePowerUps: { kind: PowerUpKind; remainingMs: number }[]; status: 'countdown' | 'playing' | 'paused' | 'tracking-lost' | 'completed'; }
+export interface GameHud { score: number; combo: number; multiplier: number; timeLeft: number; level: number; levelStartScore: number; nextLevelScore: number; captured: number; golden: number; bombs: number; missed: number; activePowerUps: { kind: PowerUpKind; remainingMs: number }[]; status: 'countdown' | 'playing' | 'paused' | 'tracking-lost' | 'completed'; levelUpAnnouncement?: { level: number; timestamp: number } | null; }
 
 interface FallingObject { sprite: Phaser.GameObjects.Container; kind: ChipKind | 'powerup'; powerUp?: PowerUpKind; x: number; y: number; anchorX: number; speed: number; radius: number; processed: boolean; rotation: number; drift: number; wobbleAmplitude: number; wobblePhase: number; wobbleSpeed: number; }
 
@@ -37,6 +37,8 @@ class BiteScene extends Phaser.Scene {
   private bombs = 0;
   private eligible = 0;
   private level = 1;
+  private highestLevelReached = 1;
+  private levelUpAnnouncement: { level: number; timestamp: number } | null = null;
   private paused = false;
   private completed = false;
   private activePowerUps = new Map<PowerUpKind, { activatedAt: number; remainingMs: number }>();
@@ -103,7 +105,7 @@ class BiteScene extends Phaser.Scene {
     this.callbacks.onHud(this.hud('playing'));
   }
 
-  setPaused(paused: boolean) { this.paused = paused; }
+  setPaused(paused: boolean) { this.paused = paused; gameAudio.setPaused(paused); }
   togglePause() { this.setPaused(!this.paused); }
   stop() { this.finish(); }
 
@@ -146,13 +148,69 @@ class BiteScene extends Phaser.Scene {
 
   private syncLevel() {
     const reachedLevel = getLevelForScore(this.score);
-    if (reachedLevel > this.level) {
+    if (reachedLevel > this.highestLevelReached) {
+      this.highestLevelReached = reachedLevel;
       this.level = reachedLevel;
-      this.emitCaptureEffect(this.scale.width / 2, this.scale.height * .42, 0xffd166, `LEVEL ${this.level}`);
-      gameAudio.combo();
+      this.triggerLevelUpEffect(reachedLevel);
+      gameAudio.levelUp();
     }
     this.difficulty = getDifficultyProfile(this.level, this.config);
     return this.difficulty;
+  }
+
+  private triggerLevelUpEffect(newLevel: number) {
+    const width = this.scale.width;
+    const height = this.scale.height;
+    this.levelUpAnnouncement = { level: newLevel, timestamp: performance.now() };
+
+    const container = this.add.container(width / 2, height * 0.38).setDepth(20);
+    const bannerBg = this.add.rectangle(0, 0, 360, 68, 0x090817, 0.9);
+    bannerBg.setStrokeStyle(2, 0xffd166, 0.95);
+
+    const titleText = this.add.text(0, -13, '★ LEVEL UP! ★', {
+      color: '#ffe078',
+      fontFamily: 'Podium Sharp, Impact, sans-serif',
+      fontSize: '22px',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    const subText = this.add.text(0, 13, `LEVEL ${newLevel} UNLOCKED`, {
+      color: '#50e3ff',
+      fontFamily: 'DM Mono, monospace',
+      fontSize: '13px',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    const ring1 = this.add.circle(0, 0, 36, 0xffd166, 0).setStrokeStyle(4, 0xffd166, 1);
+    const ring2 = this.add.circle(0, 0, 36, 0x50e3ff, 0).setStrokeStyle(3, 0x50e3ff, 0.8);
+
+    container.add([bannerBg, titleText, subText, ring1, ring2]);
+    container.setScale(0.3);
+    container.setAlpha(0);
+
+    this.tweens.add({ targets: ring1, radius: 130, alpha: 0, duration: 650, ease: 'Cubic.Out' });
+    this.tweens.add({ targets: ring2, radius: 160, alpha: 0, duration: 800, ease: 'Cubic.Out' });
+    this.tweens.add({
+      targets: container,
+      scale: 1,
+      alpha: 1,
+      duration: 220,
+      ease: 'Back.Out',
+      onComplete: () => {
+        this.time.delayedCall(1100, () => {
+          this.tweens.add({
+            targets: container,
+            alpha: 0,
+            y: height * 0.38 - 25,
+            duration: 300,
+            ease: 'Cubic.In',
+            onComplete: () => {
+              container.destroy();
+            },
+          });
+        });
+      },
+    });
   }
 
   private spawnObject(difficulty = this.difficulty) {
@@ -297,7 +355,7 @@ class BiteScene extends Phaser.Scene {
   }
 
   private hud(status: GameHud['status']): GameHud {
-    return { score: this.score, combo: this.combo, multiplier: getComboMultiplier(this.combo, this.config) * (this.activePowerUps.has('double-score') ? 2 : 1), timeLeft: Math.max(0, this.finalTimeSeconds - this.elapsed / 1000), level: this.level, levelStartScore: this.difficulty.levelStartScore, nextLevelScore: this.difficulty.nextLevelScore, captured: this.captured, golden: this.golden, bombs: this.bombs, missed: this.missed, activePowerUps: [...this.activePowerUps.entries()].filter(([, value]) => value.remainingMs < 999999).map(([kind, value]) => ({ kind, remainingMs: Math.max(0, value.remainingMs) })), status };
+    return { score: this.score, combo: this.combo, multiplier: getComboMultiplier(this.combo, this.config) * (this.activePowerUps.has('double-score') ? 2 : 1), timeLeft: Math.max(0, this.finalTimeSeconds - this.elapsed / 1000), level: this.level, levelStartScore: this.difficulty.levelStartScore, nextLevelScore: this.difficulty.nextLevelScore, captured: this.captured, golden: this.golden, bombs: this.bombs, missed: this.missed, activePowerUps: [...this.activePowerUps.entries()].filter(([, value]) => value.remainingMs < 999999).map(([kind, value]) => ({ kind, remainingMs: Math.max(0, value.remainingMs) })), status, levelUpAnnouncement: this.levelUpAnnouncement };
   }
 
   private finish() {

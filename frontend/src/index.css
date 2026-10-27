@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Oswald:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,14 +17,15 @@ body { min-width: 320px; min-height: 100vh; margin: 0; background: #090817; over
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 
-@font-face {
-  font-family: 'FSP DEMO - PODIUM Sharp 4.11';
-  src: local('FSP DEMO - PODIUM Sharp 4.11');
-  font-display: swap;
+.font-podium {
+  font-family: 'Bebas Neue', 'Oswald', 'PODIUM Sharp', 'Space Grotesk', Inter, system-ui, sans-serif;
+  letter-spacing: 0.02em;
 }
 
-.font-podium {
-  font-family: 'FSP DEMO - PODIUM Sharp 4.11', Inter, system-ui, sans-serif;
+.font-score {
+  font-family: 'Bebas Neue', 'Oswald', 'Space Grotesk', 'DM Mono', monospace, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
 }
 
 @keyframes cbc-fade-up {

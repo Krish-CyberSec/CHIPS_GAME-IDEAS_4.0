@@ -35,9 +35,19 @@ export interface ActivePowerUp {
   activatedAt: number;
 }
 
+export interface VerifiedRankInfo {
+  dailyRank: number | null;
+  allTimeRank: number | null;
+  isTopThreeDaily: boolean;
+  isTopThreeAllTime: boolean;
+  bestRank: number;
+}
+
 export interface GameResult {
   id: string;
   nickname: string;
+  email?: string | null;
+  phoneNumber?: string | null;
   score: number;
   capturedChips: number;
   goldenChips: number;
@@ -51,10 +61,20 @@ export interface GameResult {
   createdAt: string;
   personalBest: boolean;
   localOnly: boolean;
+  isProvisional?: boolean;
+  verifiedRank?: VerifiedRankInfo | null;
+  profilePicture?: string | null;
+  isDemo?: boolean;
 }
 
 export interface PlayerProfile {
+  id?: string;
   nickname: string;
+  email?: string | null;
+  phoneNumber?: string | null;
+  profilePicture?: string | null;
+  isDemo?: boolean;
+  createdAtUtc?: string | null;
   totalRounds: number;
   bestScore: number;
   totalXp: number;
@@ -76,6 +96,7 @@ export interface Achievement {
 export interface GameSettings {
   mode: ControlMode;
   soundEnabled: boolean;
+  soundVolume: number;
   musicEnabled: boolean;
   reducedMotion: boolean;
   calibrationResult: CalibrationResult | null;

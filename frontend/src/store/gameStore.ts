@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import type { GameResult, GameSettings, PlayerProfile } from '../types';
+import { gameAudio } from '../services/audio';
 
 interface StoreState {
   settings: GameSettings;
@@ -38,8 +39,23 @@ const read = <T,>(key: string, fallback: T): T => {
 };
 
 const storedSettings = read<Partial<GameSettings>>('cbc-settings', {});
+const initialSoundEnabled = storedSettings.soundEnabled ?? !gameAudio.isMuted();
+const initialSoundVolume = typeof storedSettings.soundVolume === 'number'
+  ? Math.max(0, Math.min(1, storedSettings.soundVolume))
+  : gameAudio.getVolume();
+
+gameAudio.setMuted(!initialSoundEnabled);
+gameAudio.setVolume(initialSoundVolume);
+
 let state: StoreState = {
-  settings: { mode: 'webcam', soundEnabled: storedSettings.soundEnabled ?? true, musicEnabled: storedSettings.musicEnabled ?? false, reducedMotion: storedSettings.reducedMotion ?? false, calibrationResult: storedSettings.calibrationResult ?? null },
+  settings: {
+    mode: 'webcam',
+    soundEnabled: initialSoundEnabled,
+    soundVolume: initialSoundVolume,
+    musicEnabled: storedSettings.musicEnabled ?? false,
+    reducedMotion: storedSettings.reducedMotion ?? false,
+    calibrationResult: storedSettings.calibrationResult ?? null,
+  },
   profile: read<PlayerProfile>('cbc-profile', fallbackProfile),
   currentResult: null,
 };
@@ -62,12 +78,28 @@ export const gameStore = {
     return () => listeners.delete(listener);
   },
   updateSettings: (settings: Partial<GameSettings>) => {
+    if (settings.soundEnabled !== undefined) {
+      gameAudio.setMuted(!settings.soundEnabled);
+    }
+    if (settings.soundVolume !== undefined) {
+      gameAudio.setVolume(settings.soundVolume);
+    }
     state = { ...state, settings: { ...state.settings, ...settings } };
     persist();
     notify();
   },
   setProfileNickname: (nickname: string) => {
     state = { ...state, profile: { ...state.profile, nickname } };
+    persist();
+    notify();
+  },
+  setProfilePicture: (profilePicture: string | null) => {
+    state = { ...state, profile: { ...state.profile, profilePicture } };
+    persist();
+    notify();
+  },
+  updateProfile: (updates: Partial<PlayerProfile>) => {
+    state = { ...state, profile: { ...state.profile, ...updates } };
     persist();
     notify();
   },
@@ -101,7 +133,13 @@ export const gameStore = {
       achievements,
       recentResults: [result, ...profile.recentResults].slice(0, 12),
     };
-    const finalResult = { ...result, personalBest: result.score >= profile.bestScore };
+    const finalResult = {
+      ...result,
+      personalBest: result.score >= profile.bestScore,
+      profilePicture: result.profilePicture ?? profile.profilePicture,
+      email: result.email ?? profile.email ?? null,
+      phoneNumber: result.phoneNumber ?? profile.phoneNumber ?? null,
+    };
     state = { ...state, profile: nextProfile, currentResult: finalResult };
     persist();
     notify();

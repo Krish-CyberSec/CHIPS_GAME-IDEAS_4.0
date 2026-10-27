@@ -129,6 +129,9 @@ namespace ChipBiteChallenge.API.Data.Migrations
                     b.Property<int>("GoldenChips")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsDemo")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Mode")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -190,6 +193,13 @@ namespace ChipBiteChallenge.API.Data.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("IsDemo")
+                        .HasColumnType("bit");
+
                     b.Property<int>("Level")
                         .HasColumnType("int");
 
@@ -197,6 +207,14 @@ namespace ChipBiteChallenge.API.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(18)
                         .HasColumnType("nvarchar(18)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("ProfilePicture")
+                        .HasMaxLength(300000)
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("TotalRounds")
                         .HasColumnType("int");
