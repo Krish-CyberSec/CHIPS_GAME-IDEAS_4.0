@@ -2,7 +2,8 @@
   "name": "chip-bite-challenge-workspace",
   "private": true,
   "scripts": {
-    "dev": "npm --prefix frontend run dev",
+    "server": "node server/index.js",
+    "dev": "node -e \"const { spawn } = require('child_process'); const opts = { stdio: 'inherit', shell: true }; const s = spawn('node', ['server/index.js'], opts); const f = spawn('npm', ['--prefix', 'frontend', 'run', 'dev'], opts); const kill = () => { s.kill(); f.kill(); process.exit(); }; process.on('SIGINT', kill); process.on('SIGTERM', kill); s.on('exit', kill); f.on('exit', kill);\"",
     "build": "npm --prefix frontend run build",
     "test": "npm --prefix frontend test",
     "lint": "npm --prefix frontend run lint"

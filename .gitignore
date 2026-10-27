@@ -9,7 +9,10 @@ backend/**/obj/
 backend/.vs/
 backend/**/appsettings.*.local.json
 backend/**/Properties/serviceDependencies.*
+server/*.db
+server/*.db-journal
 *.user
 *.suo
 *.log
 .DS_Store
+ref/**
