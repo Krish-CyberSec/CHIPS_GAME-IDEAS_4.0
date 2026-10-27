@@ -1,5 +1,7 @@
 export type ControlMode = 'webcam';
 
+export type ThemeMode = 'dark' | 'light';
+
 export type GameStatus = 'idle' | 'preparing' | 'calibrating' | 'countdown' | 'playing' | 'paused' | 'tracking-lost' | 'completed' | 'error';
 
 export type ChipKind = 'normal' | 'golden' | 'speed' | 'frozen' | 'combo' | 'bomb' | 'mystery';
@@ -75,6 +77,7 @@ export interface Achievement {
 
 export interface GameSettings {
   mode: ControlMode;
+  theme: ThemeMode;
   soundEnabled: boolean;
   musicEnabled: boolean;
   reducedMotion: boolean;

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { GameResult, GameSettings, PlayerProfile } from '../types';
+import type { GameResult, GameSettings, PlayerProfile, ThemeMode } from '../types';
 
 interface StoreState {
   settings: GameSettings;
@@ -31,18 +31,42 @@ const fallbackProfile: PlayerProfile = {
 const read = <T,>(key: string, fallback: T): T => {
   try {
     const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) as T : fallback;
+    return value ? (JSON.parse(value) as T) : fallback;
   } catch {
     return fallback;
   }
 };
 
 const storedSettings = read<Partial<GameSettings>>('cbc-settings', {});
+const initialTheme: ThemeMode = storedSettings.theme ?? 'dark';
+
 let state: StoreState = {
-  settings: { mode: 'webcam', soundEnabled: storedSettings.soundEnabled ?? true, musicEnabled: storedSettings.musicEnabled ?? false, reducedMotion: storedSettings.reducedMotion ?? false, calibrationResult: storedSettings.calibrationResult ?? null },
+  settings: {
+    mode: 'webcam',
+    theme: initialTheme,
+    soundEnabled: storedSettings.soundEnabled ?? true,
+    musicEnabled: storedSettings.musicEnabled ?? false,
+    reducedMotion: storedSettings.reducedMotion ?? false,
+    calibrationResult: storedSettings.calibrationResult ?? null,
+  },
   profile: read<PlayerProfile>('cbc-profile', fallbackProfile),
   currentResult: null,
 };
+
+// Apply theme to document root immediately
+const applyDocumentTheme = (theme: ThemeMode) => {
+  if (typeof document !== 'undefined') {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    }
+  }
+};
+
+applyDocumentTheme(state.settings.theme);
 
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((listener) => listener());
@@ -63,8 +87,15 @@ export const gameStore = {
   },
   updateSettings: (settings: Partial<GameSettings>) => {
     state = { ...state, settings: { ...state.settings, ...settings } };
+    if (settings.theme) {
+      applyDocumentTheme(settings.theme);
+    }
     persist();
     notify();
+  },
+  toggleTheme: () => {
+    const nextTheme: ThemeMode = state.settings.theme === 'dark' ? 'light' : 'dark';
+    gameStore.updateSettings({ theme: nextTheme });
   },
   setProfileNickname: (nickname: string) => {
     state = { ...state, profile: { ...state.profile, nickname } };
@@ -78,15 +109,15 @@ export const gameStore = {
   saveResult: (result: GameResult) => {
     const profile = state.profile;
     const achievements = profile.achievements.map((achievement) => {
-      const unlocked = achievement.unlocked || (
+      const unlocked =
+        achievement.unlocked ||
         (achievement.id === 'first-bite' && profile.totalRounds + 1 >= 1) ||
         (achievement.id === 'golden-hunter' && result.goldenChips >= 5) ||
         (achievement.id === 'combo-master' && result.bestCombo >= 10) ||
         (achievement.id === 'bomb-dodger' && result.bombPenalties === 0) ||
         (achievement.id === 'speed-demon' && (result.speedCaptures ?? 0) >= 10) ||
         (achievement.id === 'high-scorer' && result.score >= 200) ||
-        (achievement.id === 'perfect-run' && result.bombPenalties === 0)
-      );
+        (achievement.id === 'perfect-run' && result.bombPenalties === 0);
       return unlocked && !achievement.unlocked ? { ...achievement, unlocked, unlockedAt: result.createdAt } : { ...achievement, unlocked };
     });
     const bestScore = Math.max(profile.bestScore, result.score);
@@ -99,13 +130,12 @@ export const gameStore = {
       level: Math.max(1, Math.floor((profile.totalXp + result.xpEarned) / 250) + 1),
       bestCombo: Math.max(profile.bestCombo, result.bestCombo),
       achievements,
-      recentResults: [result, ...profile.recentResults].slice(0, 12),
+      recentResults: [result, ...profile.recentResults].slice(0, 20),
     };
-    const finalResult = { ...result, personalBest: result.score >= profile.bestScore };
-    state = { ...state, profile: nextProfile, currentResult: finalResult };
+    state = { ...state, profile: nextProfile, currentResult: result };
     persist();
     notify();
-    return finalResult;
+    return result;
   },
   resetProfile: () => {
     state = { ...state, profile: fallbackProfile, currentResult: null };
@@ -114,4 +144,4 @@ export const gameStore = {
   },
 };
 
-export const useGameStore = () => useSyncExternalStore(gameStore.subscribe, gameStore.getSnapshot, gameStore.getSnapshot);
+export const useGameStore = () => useSyncExternalStore(gameStore.subscribe, gameStore.getSnapshot);
