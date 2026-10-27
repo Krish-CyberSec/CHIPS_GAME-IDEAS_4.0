@@ -7,15 +7,14 @@
   --bg-shell: #110d0b;
   --bg-panel: #17152c;
   --text-main: #f8f7ff;
-  --text-muted: rgba(255, 255, 255, 0.55);
+  --text-muted: rgba(255, 255, 255, 0.6);
   --border-subtle: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.2);
-  --card-bg: rgba(0, 0, 0, 0.2);
-  --header-bg: rgba(0, 0, 0, 0.5);
-  --dialog-bg: rgba(9, 8, 23, 0.95);
+  --border-strong: rgba(255, 255, 255, 0.25);
+  --card-bg: rgba(23, 21, 44, 0.7);
+  --header-bg: rgba(9, 8, 23, 0.65);
+  --dialog-bg: rgba(9, 8, 23, 0.96);
   --accent-cyan: #50e3ff;
   --accent-terracotta: #cc785c;
-  --video-overlay: rgba(17, 13, 11, 0.8);
   font-family: 'Inter', 'Space Grotesk', system-ui, sans-serif;
   color: var(--text-main);
   background: var(--bg-main);
@@ -23,29 +22,36 @@
   text-rendering: optimizeLegibility;
 }
 
-/* Claude-Code styled warm off-white light theme */
+/* Claude Code styled warm off-white light theme */
 html.light,
 .light {
   --bg-main: #faf8f5;
   --bg-shell: #f4efe9;
   --bg-panel: #ede6de;
   --text-main: #231f1c;
-  --text-muted: #6e655f;
+  --text-muted: #5c534c;
   --border-subtle: #dcd4cb;
-  --border-strong: #c8beb3;
+  --border-strong: #b8aea3;
   --card-bg: #f5f0eb;
   --header-bg: rgba(250, 248, 245, 0.88);
   --dialog-bg: rgba(250, 248, 245, 0.98);
   --accent-cyan: #d97746;
   --accent-terracotta: #c25e2e;
-  --video-overlay: rgba(244, 239, 233, 0.92);
   color: var(--text-main);
   background: var(--bg-main);
 }
 
 * { box-sizing: border-box; }
 html { min-width: 320px; background: var(--bg-main); }
-body { min-width: 320px; min-height: 100vh; margin: 0; background: var(--bg-main); color: var(--text-main); overflow-x: hidden; transition: background-color 0.25s ease, color 0.25s ease; }
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--bg-main);
+  color: var(--text-main);
+  overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 
@@ -85,47 +91,103 @@ button { cursor: pointer; }
 .cbc-fade-in { animation: cbc-fade-in .35s ease-out both; }
 
 @layer components {
+  /* Arcade Card Component */
   .arcade-card {
-    @apply border border-white/10 dark:border-white/10 p-5 shadow-violet backdrop-blur-sm transition duration-200;
-    background-color: var(--bg-panel);
+    @apply border p-5 backdrop-blur-sm transition duration-200;
     border-color: var(--border-subtle);
+    background-color: var(--card-bg);
+  }
+  .dark .arcade-card {
+    box-shadow: 0 0 32px rgba(155, 123, 255, 0.12);
+  }
+  .light .arcade-card {
+    box-shadow: 0 2px 10px rgba(35, 31, 28, 0.04);
   }
 
+  /* Primary Button Component */
   .arcade-button-primary {
-    @apply inline-flex items-center justify-center gap-2 border px-5 py-3 font-semibold transition duration-200 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50;
-    background-color: var(--accent-cyan);
+    @apply inline-flex items-center justify-center gap-2 border px-6 py-3.5 font-inter text-xs font-bold uppercase tracking-[0.18em] transition-all duration-200 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .dark .arcade-button-primary {
+    background-color: #ffffff;
     color: #090817;
-    border-color: var(--accent-cyan);
+    border-color: #ffffff;
+    box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
   }
-
+  .dark .arcade-button-primary:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+  }
   .light .arcade-button-primary {
-    color: #ffffff;
-    background-color: #d97746;
-    border-color: #d97746;
+    background-color: #231f1c;
+    color: #faf8f5;
+    border-color: #231f1c;
+    box-shadow: 0 4px 14px rgba(35, 31, 28, 0.14);
+  }
+  .light .arcade-button-primary:hover:not(:disabled) {
+    background-color: #38322e;
+    border-color: #38322e;
+    box-shadow: 0 6px 18px rgba(35, 31, 28, 0.22);
+    transform: translateY(-1px);
   }
 
+  /* Secondary Button Component */
   .arcade-button-secondary {
-    @apply inline-flex items-center justify-center gap-2 border px-5 py-3 font-semibold transition duration-200 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50;
-    border-color: var(--border-subtle);
-    background-color: var(--card-bg);
-    color: var(--text-main);
+    @apply inline-flex items-center justify-center gap-2 border px-5 py-3.5 font-inter text-xs font-semibold uppercase tracking-[0.16em] backdrop-blur-sm transition-all duration-200 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .dark .arcade-button-secondary {
+    border-color: rgba(255, 255, 255, 0.22);
+    background-color: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .dark .arcade-button-secondary:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.45);
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+  .light .arcade-button-secondary {
+    border-color: #dcd4cb;
+    background-color: #f4efe9;
+    color: #231f1c;
+    box-shadow: 0 1px 3px rgba(35, 31, 28, 0.04);
+  }
+  .light .arcade-button-secondary:hover:not(:disabled) {
+    border-color: #b8aea3;
+    background-color: #ede6de;
+    color: #1a1614;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(35, 31, 28, 0.08);
   }
 
-  .arcade-button-secondary:hover {
-    border-color: var(--border-strong);
-  }
-
+  /* Icon Button Component */
   .arcade-icon-button {
-    @apply flex h-10 w-10 items-center justify-center rounded-lg border transition duration-200 active:scale-95;
-    border-color: var(--border-subtle);
-    background-color: var(--card-bg);
-    color: var(--text-main);
+    @apply inline-flex h-11 w-11 items-center justify-center border transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .dark .arcade-icon-button {
+    border-color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+  }
+  .dark .arcade-icon-button:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+  .light .arcade-icon-button {
+    border-color: #dcd4cb;
+    background-color: #f4efe9;
+    color: #231f1c;
+    box-shadow: 0 1px 2px rgba(35, 31, 28, 0.04);
+  }
+  .light .arcade-icon-button:hover:not(:disabled) {
+    border-color: #8c827a;
+    background-color: #ede6de;
   }
 
   .badge-glow {
     box-shadow: 0 0 16px rgba(80, 227, 255, 0.35);
   }
-
   .light .badge-glow {
     box-shadow: 0 0 16px rgba(217, 119, 70, 0.3);
   }
@@ -142,97 +204,69 @@ button { cursor: pointer; }
   .mono { font-family: 'DM Mono', monospace; }
 }
 
-/* Light mode overrides for high-contrast readability */
-.light .text-white {
-  color: #231f1c !important;
+/* Light Mode Theme Overrides using 0-specificity :where()
+   This gracefully themes standard pages without colliding or fighting button styles/hovers */
+.light :where(h1, h2, h3, h4, h5, h6) {
+  color: #231f1c;
 }
 
-.light .text-white\/30,
-.light .text-white\/35,
-.light .text-white\/40 {
-  color: #8c827a !important;
+.light :where(.text-white) {
+  color: #231f1c;
 }
 
-.light .text-white\/45,
-.light .text-white\/50,
-.light .text-white\/55,
-.light .text-white\/60,
-.light .text-white\/65,
-.light .text-white\/70,
-.light .text-white\/75 {
-  color: #5c534c !important;
+.light :where(.text-white\/90, .text-white\/85, .text-white\/80) {
+  color: #38322e;
 }
 
-.light .border-white\/5,
-.light .border-white\/10,
-.light .border-white\/15,
-.light .border-white\/20,
-.light .border-white\/25,
-.light .border-white\/30,
-.light .border-white\/35,
-.light .border-white\/45 {
-  border-color: #dcd4cb !important;
+.light :where(.text-white\/75, .text-white\/70, .text-white\/65, .text-white\/60, .text-white\/55, .text-white\/50) {
+  color: #5c534c;
 }
 
-.light .bg-black\/20,
-.light .bg-black\/30,
-.light .bg-black\/50,
-.light .bg-white\/\[\.02\],
-.light .bg-white\/\[\.03\],
-.light .bg-white\/\[\.04\],
-.light .bg-white\/\[\.06\],
-.light .bg-white\/10 {
-  background-color: #f2ebe3 !important;
+.light :where(.text-white\/45, .text-white\/40, .text-white\/35, .text-white\/30, .text-white\/25, .text-white\/20) {
+  color: #8c827a;
 }
 
-.light .bg-panel {
-  background-color: #ebe3d9 !important;
+.light :where(.border-white\/5, .border-white\/10, .border-white\/15, .border-white\/20, .border-white\/25, .border-white\/30, .border-white\/35, .border-white\/40, .border-white\/45) {
+  border-color: #dcd4cb;
 }
 
-.light .text-cyan {
-  color: #c25e2e !important;
+.light :where(.bg-black\/20, .bg-black\/30, .bg-black\/40, .bg-black\/50, .bg-black\/60, .bg-black\/70, .bg-black\/75, .bg-black\/80, .bg-black\/85, .bg-black\/95) {
+  background-color: #f4efe9;
 }
 
-.light .border-cyan,
-.light .border-cyan\/20,
-.light .border-cyan\/25,
-.light .border-cyan\/30,
-.light .border-cyan\/35,
-.light .border-cyan\/40 {
-  border-color: #d97746 !important;
+.light :where(.bg-white\/\[\.02\], .bg-white\/\[\.03\], .bg-white\/\[\.04\], .bg-white\/\[\.06\], .bg-white\/10) {
+  background-color: #ede6de;
 }
 
-.light .bg-cyan {
-  background-color: #d97746 !important;
+.light :where(.bg-panel) {
+  background-color: #ede6de;
 }
 
-.light .bg-cyan\/\[\.06\],
-.light .bg-cyan\/10,
-.light .bg-cyan\/15 {
-  background-color: rgba(217, 119, 70, 0.12) !important;
+.light :where(.text-cyan) {
+  color: #d97746;
 }
 
-.light .bg-white {
-  background-color: #231f1c !important;
-  color: #faf8f5 !important;
+.light :where(.border-cyan, .border-cyan\/20, .border-cyan\/25, .border-cyan\/30, .border-cyan\/35, .border-cyan\/40) {
+  border-color: #d97746;
 }
 
-.light .bg-white.text-black {
-  background-color: #231f1c !important;
-  color: #faf8f5 !important;
+.light :where(.bg-cyan) {
+  background-color: #d97746;
 }
 
-.light .hover\:bg-white:hover {
-  background-color: #231f1c !important;
-  color: #faf8f5 !important;
+.light :where(.bg-cyan\/\[\.06\], .bg-cyan\/10, .bg-cyan\/15) {
+  background-color: rgba(217, 119, 70, 0.12);
 }
 
-.light input {
-  background-color: #f7f3ee !important;
-  color: #231f1c !important;
-  border-color: #dcd4cb !important;
+.light input,
+.light select,
+.light textarea {
+  background-color: #f7f3ee;
+  color: #231f1c;
+  border-color: #dcd4cb;
 }
 
-.light input::placeholder {
-  color: #a49a90 !important;
+.light input::placeholder,
+.light textarea::placeholder {
+  color: #a49a90;
 }
