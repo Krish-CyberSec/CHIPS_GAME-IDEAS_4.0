@@ -20,7 +20,7 @@ export class FaceLandmarkerService {
       const createDetector = (delegate: 'GPU' | 'CPU') => FaceLandmarker.createFromOptions(vision, {
         baseOptions: { modelAssetPath: modelUrl, delegate },
         runningMode: 'VIDEO',
-        numFaces: 2,
+        numFaces: 4,
         minFaceDetectionConfidence: 0.45,
         minFacePresenceConfidence: 0.45,
         minTrackingConfidence: 0.45,

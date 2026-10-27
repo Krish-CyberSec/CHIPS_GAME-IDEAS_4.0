@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, Menu, Moon, Sun, Volume2, VolumeX, X } from 'lucide-react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Logo } from './Logo';
+import { KrmuBranding } from './KrmuBranding';
 import { gameStore, useGameStore } from '../store/gameStore';
 
 const backgroundVideo = 'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260606_154941_df1a96e1-a06f-450c-bd02-d863414cc1a0.mp4';
 const primaryItems = [
   { to: '/how-to-play', label: 'How to play' },
+  { to: '/photograph', label: 'Photograph' },
   { to: '/leaderboard', label: 'Leaderboard' },
 ];
 const secondaryItems = [
@@ -83,6 +85,7 @@ export function Layout() {
           <Link to="/" aria-label="Go to Chip Bite Challenge home">
             <Logo />
           </Link>
+
           <nav className="hidden items-center gap-7 md:flex" aria-label="Primary navigation">
             {primaryItems.map(({ to, label }) => (
               <NavLink
@@ -99,12 +102,6 @@ export function Layout() {
                 {label}
               </NavLink>
             ))}
-            <Link
-              className="font-inter text-[0.67rem] font-semibold uppercase tracking-[0.2em] text-[#5c534c] hover:text-[#231f1c] dark:text-white/55 dark:hover:text-white transition"
-              to="/#about"
-            >
-              About
-            </Link>
             {secondaryItems.map(({ to, label }) => (
               <NavLink
                 key={to}
@@ -200,6 +197,9 @@ export function Layout() {
             <Link className="font-podium text-4xl uppercase tracking-tight text-[#231f1c] transition hover:text-[#231f1c]/60 dark:text-white dark:hover:text-white/55" to="/how-to-play" onClick={closeMenu}>
               How to play
             </Link>
+            <Link className="font-podium text-4xl uppercase tracking-tight text-[#231f1c] transition hover:text-[#231f1c]/60 dark:text-white dark:hover:text-white/55" to="/photograph" onClick={closeMenu}>
+              Photograph Studio
+            </Link>
             <Link className="font-podium text-4xl uppercase tracking-tight text-[#231f1c] transition hover:text-[#231f1c]/60 dark:text-white dark:hover:text-white/55" to="/leaderboard" onClick={closeMenu}>
               Leaderboard
             </Link>
@@ -209,15 +209,12 @@ export function Layout() {
             <Link className="font-podium text-4xl uppercase tracking-tight text-[#231f1c] transition hover:text-[#231f1c]/60 dark:text-white dark:hover:text-white/55" to="/admin" onClick={closeMenu}>
               Operator
             </Link>
-            <Link className="font-podium text-4xl uppercase tracking-tight text-[#231f1c] transition hover:text-[#231f1c]/60 dark:text-white dark:hover:text-white/55" to="/#about" onClick={closeMenu}>
-              About
-            </Link>
             <Link className="mt-3 inline-flex w-fit items-center gap-3 border border-[#231f1c]/35 px-5 py-4 font-inter text-sm font-bold uppercase tracking-[0.2em] text-[#231f1c] transition hover:bg-[#231f1c] hover:text-[#faf8f5] dark:border-white/45 dark:text-white dark:hover:bg-white dark:hover:text-black" to="/setup" onClick={closeMenu}>
               Play now <ArrowUpRight size={18} />
             </Link>
           </nav>
           <div className="flex items-center justify-between font-inter text-[0.62rem] uppercase tracking-[0.2em] text-[#8c827a] dark:text-white/35">
-            <span>Chip Bite Challenge</span>
+            <span>KRMU · Centre of Excellence in AI</span>
             <span>Camera stays local</span>
           </div>
         </div>
@@ -235,11 +232,15 @@ export function Layout() {
               <p className="mt-5 max-w-xs font-inter text-sm leading-6 text-[#5c534c] dark:text-white/45">
                 A cinematic, camera-powered arcade challenge built for quick rounds, loud reactions, and one more try.
               </p>
+              <div className="mt-6">
+                <KrmuBranding variant="footer" />
+              </div>
             </div>
             <div>
               <div className="font-inter text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[#8c827a] dark:text-white/35">Explore</div>
               <div className="mt-4 space-y-3 font-inter text-sm text-[#5c534c] dark:text-white/60">
                 <Link className="block hover:text-[#231f1c] dark:hover:text-white transition" to="/how-to-play">How to play</Link>
+                <Link className="block hover:text-[#231f1c] dark:hover:text-white transition" to="/photograph">Photograph Studio</Link>
                 <Link className="block hover:text-[#231f1c] dark:hover:text-white transition" to="/leaderboard">Leaderboard</Link>
                 <Link className="block hover:text-[#231f1c] dark:hover:text-white transition" to="/profile">Player profile</Link>
               </div>
@@ -248,19 +249,20 @@ export function Layout() {
               <div className="font-inter text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[#8c827a] dark:text-white/35">Enter the arena</div>
               <div className="mt-4 space-y-3 font-inter text-sm text-[#5c534c] dark:text-white/60">
                 <Link className="block hover:text-[#231f1c] dark:hover:text-white transition" to="/setup">Start a round</Link>
+                <Link className="block hover:text-[#231f1c] dark:hover:text-white transition" to="/photograph">Photo booth</Link>
                 <Link className="block hover:text-[#231f1c] dark:hover:text-white transition" to="/setup">Camera setup</Link>
                 <Link className="block hover:text-[#231f1c] dark:hover:text-white transition" to="/admin">Operator console</Link>
               </div>
             </div>
             <div>
-              <div className="font-inter text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[#8c827a] dark:text-white/35">Privacy</div>
+              <div className="font-inter text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[#8c827a] dark:text-white/35">Privacy & Security</div>
               <p className="mt-4 font-inter text-sm leading-6 text-[#5c534c] dark:text-white/45">
-                Face landmarks and camera frames stay in your browser. Only completed result summaries can be sent to the configured API.
+                Face landmarks and camera frames stay in your browser. Target validation ensures only the primary player is tracked.
               </p>
             </div>
           </div>
           <div className="mx-auto mt-10 flex max-w-[1600px] flex-col gap-2 border-t border-[#dcd4cb] pt-5 font-inter text-[0.62rem] uppercase tracking-[0.16em] text-[#8c827a] dark:border-white/10 dark:text-white/30 sm:flex-row sm:justify-between">
-            <span>Chip Bite Challenge · 45-second arcade rounds</span>
+            <span>Chip Bite Challenge · K.R. Mangalam University · Centre of Excellence in AI</span>
             <span>Built for fast, friendly competition</span>
           </div>
         </footer>
