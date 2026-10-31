@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { ArrowLeft, ArrowUpRight, Award, BadgeCheck, Crown, Download, FileCode, FileSpreadsheet, FileText, Flame, Home, Medal, Play, Printer, Share2, Sparkles, Target, Trophy, TrendingUp, User, type LucideIcon } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, ArrowUpRight, Award, BadgeCheck, Camera, Crown, Download, FileCode, FileSpreadsheet, FileText, Flame, Home, Medal, Play, Printer, Share2, Sparkles, Target, Trophy, TrendingUp, User, type LucideIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { PhotoStudioModal } from '../components/PhotoStudioModal';
 import { StatCard } from '../components/StatCard';
 import { useGameStore } from '../store/gameStore';
 import { formatScore } from '../utils/validation';
@@ -50,6 +51,7 @@ function WinnerParticles({ theme }: { theme: 'gold' | 'silver' | 'bronze' }) {
 export function ResultsPage() {
   const navigate = useNavigate();
   const { currentResult, profile } = useGameStore();
+  const [photoOpen, setPhotoOpen] = useState(false);
 
   const celebrationPlayedRef = useRef(false);
 
@@ -442,6 +444,13 @@ export function ResultsPage() {
             <Play size={16} /> Play again
           </button>
           <button
+            type="button"
+            className="inline-flex items-center gap-3 border border-cyan/40 bg-cyan/10 px-5 py-4 font-inter text-xs font-bold uppercase tracking-[.18em] text-cyan transition hover:bg-cyan hover:text-black"
+            onClick={() => setPhotoOpen(true)}
+          >
+            <Camera size={16} /> Take Souvenir Photo
+          </button>
+          <button
             className="inline-flex items-center gap-3 border border-white/20 px-5 py-4 font-inter text-xs font-bold uppercase tracking-[.18em] text-white/70 transition hover:border-white hover:text-white"
             onClick={share}
           >
@@ -461,6 +470,14 @@ export function ResultsPage() {
           </Link>
         </div>
       </section>
+
+      {/* Souvenir Photo Studio Modal */}
+      <PhotoStudioModal
+        open={photoOpen}
+        onClose={() => setPhotoOpen(false)}
+        result={currentResult}
+        nickname={profile.nickname}
+      />
     </div>
   );
 }

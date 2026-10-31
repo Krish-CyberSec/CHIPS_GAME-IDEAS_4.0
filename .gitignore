@@ -12,4 +12,6 @@ backend/**/Properties/serviceDependencies.*
 *.user
 *.suo
 *.log
+*.db
+server/
 .DS_Store

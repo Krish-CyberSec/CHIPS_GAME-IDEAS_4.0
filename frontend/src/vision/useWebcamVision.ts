@@ -7,7 +7,22 @@ import { MouthDetectionService } from './MouthDetectionService';
 
 export type VisionMessage = 'idle' | 'loading-camera' | 'loading-model' | 'ready' | 'no-face' | 'multiple-faces' | 'tracking-lost' | 'permission-denied' | 'camera-error' | 'model-error';
 
-const INITIAL_STATE: MouthTrackingState = { detected: false, reliable: false, x: .5, y: .55, width: .16, height: .05, openness: 0, isOpen: false, confidence: 0, mirrored: true, timestamp: 0 };
+const INITIAL_STATE: MouthTrackingState = {
+  detected: false,
+  reliable: false,
+  x: 0.5,
+  y: 0.55,
+  width: 0.16,
+  height: 0.05,
+  openness: 0,
+  isOpen: false,
+  confidence: 0,
+  mirrored: true,
+  timestamp: 0,
+  faceCount: 0,
+  hasMultipleFaces: false,
+  targetValidated: false,
+};
 const PUBLISH_INTERVAL_MS = 32;
 const TRACKING_GRACE_MS = 650;
 
@@ -57,15 +72,34 @@ export function useWebcamVision(videoRef: RefObject<HTMLVideoElement | null>) {
       lastReliableState.current = result;
       lastReliableAt.current = now;
     } else if (lastReliableState.current && now - lastReliableAt.current < TRACKING_GRACE_MS) {
-      effectiveState = { ...lastReliableState.current, detected: false, reliable: true, isOpen: false, openness: 0, confidence: Math.min(lastReliableState.current.confidence, .45), timestamp: now };
+      effectiveState = {
+        ...lastReliableState.current,
+        detected: false,
+        reliable: true,
+        isOpen: false,
+        openness: 0,
+        confidence: Math.min(lastReliableState.current.confidence, 0.45),
+        timestamp: now,
+      };
     }
     latestState.current = effectiveState;
-    if (effectiveState.reliable !== publishedState.current.reliable || effectiveState.detected !== publishedState.current.detected || now - lastPublishedAt.current >= PUBLISH_INTERVAL_MS) {
+    if (
+      effectiveState.reliable !== publishedState.current.reliable ||
+      effectiveState.detected !== publishedState.current.detected ||
+      effectiveState.hasMultipleFaces !== publishedState.current.hasMultipleFaces ||
+      now - lastPublishedAt.current >= PUBLISH_INTERVAL_MS
+    ) {
       lastPublishedAt.current = now;
       publishedState.current = effectiveState;
       if (mounted.current) setState(effectiveState);
     }
-    const nextMessage: VisionMessage = result.reliable ? 'ready' : result.detected ? 'multiple-faces' : lastReliableState.current ? 'tracking-lost' : 'no-face';
+    const nextMessage: VisionMessage = result.reliable
+      ? (result.hasMultipleFaces ? 'multiple-faces' : 'ready')
+      : result.detected
+      ? 'multiple-faces'
+      : lastReliableState.current
+      ? 'tracking-lost'
+      : 'no-face';
     if (messageRef.current !== nextMessage) setVisionMessage(nextMessage);
     scheduleNextFrame();
   }, [scheduleNextFrame, setVisionMessage, videoRef]);
@@ -140,6 +174,10 @@ export function useWebcamVision(videoRef: RefObject<HTMLVideoElement | null>) {
     return true;
   }, []);
 
+  const applySensitivity = useCallback((sensitivity: number) => {
+    sharedMouth.setSensitivity(sensitivity);
+  }, []);
+
   const startCalibration = useCallback(async (onPhase?: (phase: 'closed' | 'open') => void, durationMs = 2600) => {
     if (!modelReadyRef.current || !sharedCamera.active) throw new Error('The camera and model must be ready before calibration.');
     calibration.current.reset();
@@ -170,5 +208,5 @@ export function useWebcamVision(videoRef: RefObject<HTMLVideoElement | null>) {
     };
   }, [detach]);
 
-  return { state, message, modelReady, calibrationResult, start, stop, detach, startCalibration, applyCalibration };
+  return { state, message, modelReady, calibrationResult, start, stop, detach, startCalibration, applyCalibration, applySensitivity };
 }

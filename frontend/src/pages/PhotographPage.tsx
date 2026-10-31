@@ -1,0 +1,512 @@
+import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, Camera, Check, Download, Image as ImageIcon, RefreshCw, Sparkles, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useGameStore } from '../store/gameStore';
+
+type FilterType = 'warm' | 'cyber' | 'normal' | 'arcade';
+type FrameTheme = 'krmu-ai' | 'chip-champion' | 'pose-quest';
+
+const loadImage = (src: string): Promise<HTMLImageElement | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+};
+
+export function PhotographPage() {
+  const { profile, currentResult } = useGameStore();
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [visitorName, setVisitorName] = useState(profile.nickname === 'Guest Biter' ? '' : profile.nickname);
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const [filter, setFilter] = useState<FilterType>('warm');
+  const [theme, setTheme] = useState<FrameTheme>('krmu-ai');
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [flash, setFlash] = useState(false);
+  const [cameraError, setCameraError] = useState('');
+  const [downloaded, setDownloaded] = useState(false);
+  const [recentSnaps, setRecentSnaps] = useState<string[]>([]);
+  const [isCapturing, setIsCapturing] = useState(false);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<number | null>(null);
+
+  const cleanupStream = () => {
+    if (timerRef.current !== null) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setStream(null);
+  };
+
+  // Initialize webcam
+  useEffect(() => {
+    let mounted = true;
+    navigator.mediaDevices
+      ?.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+        audio: false,
+      })
+      .then((mediaStream) => {
+        if (!mounted) {
+          mediaStream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        streamRef.current = mediaStream;
+        setStream(mediaStream);
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+          void videoRef.current.play().catch(() => undefined);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!mounted) return;
+        setCameraError(err instanceof Error ? err.message : 'Please grant webcam permissions to take photos.');
+      });
+
+    return () => {
+      mounted = false;
+      cleanupStream();
+    };
+  }, []);
+
+  // Re-attach stream when returning from preview
+  useEffect(() => {
+    if (videoRef.current && stream && !capturedPhoto) {
+      videoRef.current.srcObject = stream;
+      void videoRef.current.play().catch(() => undefined);
+    }
+  }, [stream, capturedPhoto]);
+
+  // Capture photo
+  const takeSnapshot = () => {
+    if (countdown !== null || isCapturing) return;
+    setCountdown(3);
+    timerRef.current = window.setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          if (timerRef.current !== null) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
+          void renderComposite();
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const renderComposite = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    setIsCapturing(true);
+    setFlash(true);
+    setTimeout(() => setFlash(false), 200);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 1280;
+    canvas.height = 720;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      setIsCapturing(false);
+      return;
+    }
+
+    // Filters
+    if (filter === 'cyber') ctx.filter = 'contrast(1.1) saturate(1.25) hue-rotate(-10deg)';
+    else if (filter === 'warm') ctx.filter = 'sepia(0.18) saturate(1.1) contrast(1.05)';
+    else if (filter === 'arcade') ctx.filter = 'grayscale(0.3) contrast(1.3) brightness(1.05)';
+    else ctx.filter = 'none';
+
+    // Cover crop math to avoid face squishing
+    const videoW = video.videoWidth || 1280;
+    const videoH = video.videoHeight || 720;
+    const targetAspect = canvas.width / canvas.height;
+    const videoAspect = videoW / videoH;
+
+    let sx = 0;
+    let sy = 0;
+    let sWidth = videoW;
+    let sHeight = videoH;
+
+    if (videoAspect > targetAspect) {
+      sWidth = videoH * targetAspect;
+      sx = (videoW - sWidth) / 2;
+    } else {
+      sHeight = videoW / targetAspect;
+      sy = (videoH - sHeight) / 2;
+    }
+
+    // Draw mirrored video
+    ctx.save();
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    ctx.filter = 'none';
+
+    // Top Header Banner
+    const gradTop = ctx.createLinearGradient(0, 0, 0, 120);
+    gradTop.addColorStop(0, 'rgba(15, 12, 10, 0.92)');
+    gradTop.addColorStop(0.7, 'rgba(15, 12, 10, 0.65)');
+    gradTop.addColorStop(1, 'rgba(15, 12, 10, 0)');
+    ctx.fillStyle = gradTop;
+    ctx.fillRect(0, 0, canvas.width, 120);
+
+    // Bottom Banner
+    const gradBot = ctx.createLinearGradient(0, canvas.height - 150, 0, canvas.height);
+    gradBot.addColorStop(0, 'rgba(15, 12, 10, 0)');
+    gradBot.addColorStop(0.3, 'rgba(15, 12, 10, 0.82)');
+    gradBot.addColorStop(1, 'rgba(15, 12, 10, 0.98)');
+    ctx.fillStyle = gradBot;
+    ctx.fillRect(0, canvas.height - 150, canvas.width, 150);
+
+    // Accent line
+    const themeColor = theme === 'krmu-ai' ? '#50e3ff' : theme === 'chip-champion' ? '#ffd166' : '#d97746';
+    ctx.fillStyle = themeColor;
+    ctx.fillRect(0, canvas.height - 5, canvas.width, 5);
+
+    // Title & event branding
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 24px "Bebas Neue", "Space Grotesk", sans-serif';
+    ctx.fillText('CHIP BITE CHALLENGE', 40, 48);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+    ctx.font = '600 12px "Inter", sans-serif';
+    ctx.fillText('K.R. MANGALAM UNIVERSITY  •  CENTRE OF EXCELLENCE IN ARTIFICIAL INTELLIGENCE', 40, 72);
+
+    // Player name
+    const displayName = visitorName.trim() || 'AI EXPLORER';
+    ctx.fillStyle = themeColor;
+    ctx.font = 'bold 13px "Inter", sans-serif';
+    ctx.fillText(theme === 'chip-champion' ? '★ CHAMPION SOUVENIR ★' : 'EVENT SOUVENIR', 40, canvas.height - 80);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 40px "Bebas Neue", "Space Grotesk", sans-serif';
+    ctx.fillText(displayName.toUpperCase(), 40, canvas.height - 38);
+
+    // Right details
+    ctx.textAlign = 'right';
+    if (currentResult) {
+      ctx.fillStyle = '#d97746';
+      ctx.font = 'bold 13px "Inter", sans-serif';
+      ctx.fillText('BEST GAME SCORE', canvas.width - 40, canvas.height - 80);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 44px "Bebas Neue", "Space Grotesk", sans-serif';
+      ctx.fillText(`${currentResult.score} PTS`, canvas.width - 40, canvas.height - 38);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.font = '600 12px "Inter", sans-serif';
+      ctx.fillText(`COMBO ×${currentResult.bestCombo}  •  BITES: ${currentResult.capturedChips}`, canvas.width - 40, canvas.height - 18);
+    } else {
+      ctx.fillStyle = '#ffd166';
+      ctx.font = 'bold 13px "Inter", sans-serif';
+      ctx.fillText('COMMEMORATIVE SOUVENIR', canvas.width - 40, canvas.height - 80);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 36px "Bebas Neue", "Space Grotesk", sans-serif';
+      ctx.fillText('AI BOOTH 2026', canvas.width - 40, canvas.height - 38);
+    }
+    ctx.textAlign = 'left';
+
+    // Reliable Logos Loading
+    try {
+      const [krmu, coe] = await Promise.all([
+        loadImage('/krmu-logo.png'),
+        loadImage('/krmu-coe-logo.png'),
+      ]);
+
+      if (krmu && krmu.width > 0) {
+        const w = 150;
+        const h = (krmu.height / krmu.width) * w;
+        ctx.drawImage(krmu, canvas.width - 300, 24, w, h);
+      }
+      if (coe && coe.width > 0) {
+        const w = 95;
+        const h = (coe.height / coe.width) * w;
+        ctx.drawImage(coe, canvas.width - 120, 20, w, h);
+      }
+    } catch {
+      // Gracefully continue
+    }
+
+    const dataUrl = canvas.toDataURL('image/png');
+    setCapturedPhoto(dataUrl);
+    setRecentSnaps((prev) => [dataUrl, ...prev.slice(0, 3)]);
+    setIsCapturing(false);
+  };
+
+  const downloadSnap = () => {
+    if (!capturedPhoto) return;
+    const link = document.createElement('a');
+    const safeName = (visitorName || 'player').toLowerCase().replace(/[^a-z0-9]/g, '-');
+    link.download = `krmu-photo-souvenir-${safeName}-${Date.now()}.png`;
+    link.href = capturedPhoto;
+    link.click();
+    setDownloaded(true);
+    setTimeout(() => setDownloaded(false), 2000);
+  };
+
+  const retakeSnap = () => {
+    setCapturedPhoto(null);
+    setCountdown(null);
+  };
+
+  return (
+    <div className="mx-auto max-w-[1600px] px-6 py-12 sm:px-10 lg:px-16 lg:py-18">
+      <Link
+        to="/"
+        className="inline-flex items-center gap-2 font-inter text-xs font-semibold uppercase tracking-[.18em] text-[#8c827a] hover:text-[#231f1c] dark:text-white/45 dark:hover:text-white transition"
+      >
+        <ArrowLeft size={15} /> Back to home
+      </Link>
+
+      {/* Header Title */}
+      <div className="mt-8 flex flex-col justify-between gap-6 border-b border-[#231f1c]/10 pb-8 dark:border-white/10 lg:flex-row lg:items-end">
+        <div>
+          <div className="eyebrow">photograph menu • activity studio</div>
+          <h1 className="font-podium mt-4 text-[clamp(2.8rem,7vw,6.5rem)] uppercase leading-[.88] tracking-[-.04em] text-[#231f1c] dark:text-white">
+            Photo<br />Studio.
+          </h1>
+          <p className="mt-4 max-w-xl font-inter text-base text-[#5c534c] dark:text-white/60">
+            Capture your commemorative event souvenir photo card featuring your face, official KRMU & Centre of Excellence in AI branding, and arcade game achievements.
+          </p>
+        </div>
+      </div>
+
+      {/* Main Studio Grid */}
+      <div className="mt-12 grid gap-10 lg:grid-cols-[1.2fr_.8fr] lg:items-start">
+        {/* Camera / Photo Stage */}
+        <div className="overflow-hidden rounded-xl border border-[#231f1c]/20 bg-black shadow-xl dark:border-white/20">
+          <div className="relative aspect-video w-full overflow-hidden">
+            {flash && <div className="absolute inset-0 z-40 bg-white" />}
+
+            {countdown !== null && (
+              <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-xs">
+                <div className="animate-ping font-podium text-9xl text-[#ffd166]">{countdown}</div>
+              </div>
+            )}
+
+            {capturedPhoto ? (
+              <img src={capturedPhoto} alt="Captured Souvenir" className="h-full w-full object-contain" />
+            ) : (
+              <>
+                <video
+                  ref={videoRef}
+                  playsInline
+                  muted
+                  className={`h-full w-full scale-x-[-1] object-cover ${
+                    filter === 'cyber'
+                      ? 'contrast-[1.1] saturate-[1.25] hue-rotate-[-10deg]'
+                      : filter === 'warm'
+                      ? 'sepia-[0.18] saturate-[1.1] contrast-[1.05]'
+                      : filter === 'arcade'
+                      ? 'grayscale-[0.3] contrast-[1.3] brightness-[1.05]'
+                      : ''
+                  }`}
+                />
+
+                {/* Live Overlays */}
+                <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="rounded bg-black/60 px-3.5 py-1.5 backdrop-blur-sm">
+                      <div className="font-podium text-sm uppercase text-white">Chip Bite Challenge</div>
+                      <div className="font-inter text-[0.55rem] uppercase tracking-widest text-white/60">
+                        Photo Studio Live
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2.5 rounded bg-white/95 px-3 py-1 shadow">
+                      <img src="/krmu-logo.png" alt="KRMU" className="h-5 w-auto object-contain" />
+                      <span className="h-3 w-px bg-black/20" />
+                      <img src="/krmu-coe-logo.png" alt="CoE AI" className="h-5 w-auto object-contain" />
+                    </div>
+                  </div>
+
+                  <div className="flex items-end justify-between rounded-lg bg-black/75 p-4 backdrop-blur-md">
+                    <div>
+                      <div className="font-inter text-[0.6rem] font-bold uppercase tracking-widest text-[#ffd166]">
+                        Event Visitor
+                      </div>
+                      <div className="font-podium text-2xl uppercase text-white">
+                        {visitorName.trim() || 'AI Explorer'}
+                      </div>
+                    </div>
+                    {currentResult && (
+                      <div className="text-right">
+                        <div className="font-inter text-[0.6rem] font-bold uppercase tracking-widest text-[#d97746]">
+                          Score
+                        </div>
+                        <div className="font-podium text-2xl uppercase text-white">{currentResult.score} PTS</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {cameraError && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 p-6 text-center text-white">
+                <Camera size={44} className="text-[#ff7b7b]" />
+                <div className="font-podium mt-4 text-2xl uppercase">Camera required</div>
+                <p className="mt-2 max-w-sm font-inter text-sm text-white/60">{cameraError}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Action Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 bg-[#17152c] p-5 text-white">
+            <div className="flex items-center gap-2">
+              <span className="font-inter text-xs uppercase tracking-wider text-white/50">Filter:</span>
+              {(['warm', 'cyber', 'normal', 'arcade'] as FilterType[]).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFilter(f)}
+                  className={`rounded px-3 py-1 font-inter text-xs font-semibold uppercase tracking-wider transition ${
+                    filter === f ? 'bg-white text-black' : 'border border-white/20 text-white/70 hover:border-white'
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3">
+              {capturedPhoto ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={retakeSnap}
+                    className="arcade-button-secondary inline-flex items-center gap-2"
+                  >
+                    <RefreshCw size={15} /> Retake
+                  </button>
+                  <button
+                    type="button"
+                    onClick={downloadSnap}
+                    className="arcade-button-primary inline-flex items-center gap-2"
+                  >
+                    {downloaded ? <Check size={16} /> : <Download size={16} />}
+                    {downloaded ? 'Downloaded!' : 'Download Souvenir'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={takeSnapshot}
+                  disabled={Boolean(cameraError) || countdown !== null || isCapturing}
+                  className="arcade-button-primary inline-flex items-center gap-2"
+                >
+                  <Sparkles size={16} />
+                  {countdown !== null ? `Snapping in ${countdown}s…` : '3-2-1 Snap Photo'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Studio Controls Desk */}
+        <aside className="space-y-6">
+          <div className="arcade-card p-6">
+            <div className="eyebrow">souvenir configuration</div>
+            <h2 className="font-podium mt-2 text-2xl uppercase">Personalize card</h2>
+
+            <div className="mt-5">
+              <label htmlFor="photo-name" className="font-inter text-xs font-bold uppercase tracking-wider text-[#8c827a] dark:text-white/60">
+                Name on Card
+              </label>
+              <input
+                id="photo-name"
+                value={visitorName}
+                onChange={(e) => setVisitorName(e.target.value)}
+                maxLength={24}
+                placeholder="Enter your name"
+                className="mt-2 w-full border border-[#231f1c]/15 bg-[#231f1c]/5 px-4 py-3 font-inter outline-none transition focus:border-[#d97746] dark:border-white/20 dark:bg-white/[0.04] dark:focus:border-cyan"
+              />
+            </div>
+
+            <div className="mt-6">
+              <label className="font-inter text-xs font-bold uppercase tracking-wider text-[#8c827a] dark:text-white/60">
+                Frame Theme
+              </label>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {[
+                  { id: 'krmu-ai', label: 'KRMU AI' },
+                  { id: 'chip-champion', label: 'Champion' },
+                  { id: 'pose-quest', label: 'PoseQuest' },
+                ].map(({ id, label }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setTheme(id as FrameTheme)}
+                    className={`rounded border p-2.5 text-center font-inter text-xs font-bold uppercase tracking-wider transition ${
+                      theme === id
+                        ? 'border-[#d97746] bg-[#d97746]/10 text-[#d97746] dark:border-cyan dark:bg-cyan/10 dark:text-cyan'
+                        : 'border-[#231f1c]/15 text-[#5c534c] hover:border-[#231f1c] dark:border-white/15 dark:text-white/60 dark:hover:border-white'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-[#231f1c]/10 pt-5 dark:border-white/10">
+              <div className="flex items-center gap-3">
+                <Users size={18} className="text-[#d97746] dark:text-cyan" />
+                <div className="font-inter text-xs leading-5 text-[#5c534c] dark:text-white/60">
+                  Multiple users supported. Center yourself in the frame to capture clean souvenir photos.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Souvenirs */}
+          {recentSnaps.length > 0 && (
+            <div className="arcade-card p-6">
+              <div className="flex items-center justify-between">
+                <div className="eyebrow">session gallery</div>
+                <ImageIcon size={16} className="text-[#8c827a] dark:text-white/40" />
+              </div>
+              <h3 className="font-podium mt-2 text-xl uppercase">Recent Snaps</h3>
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                {recentSnaps.map((snap, i) => (
+                  <img
+                    key={i}
+                    src={snap}
+                    alt={`Snap ${i + 1}`}
+                    className="aspect-video w-full cursor-pointer rounded border border-[#231f1c]/15 object-cover transition hover:scale-105 dark:border-white/20"
+                    onClick={() => setCapturedPhoto(snap)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Partner Notice */}
+          <div className="border border-[#d97746]/25 bg-[#d97746]/10 p-5 dark:border-cyan/25 dark:bg-cyan/10">
+            <div className="flex items-center gap-2 font-inter text-xs font-bold uppercase tracking-wider text-[#d97746] dark:text-cyan">
+              <Sparkles size={16} /> Official Event Photo Booth
+            </div>
+            <p className="mt-2 font-inter text-xs leading-5 text-[#5c534c] dark:text-white/60">
+              Organized by the Centre of Excellence in Artificial Intelligence, K.R. Mangalam University. Download and share your photos directly!
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+}

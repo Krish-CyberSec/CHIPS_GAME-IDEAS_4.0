@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, CameraOff, CirclePause, Eye, Maximize2, Minimize2, Play, Sparkles, TimerReset, Volume2, VolumeX, X } from 'lucide-react';
+import { AlertTriangle, CameraOff, CirclePause, Eye, Maximize2, Minimize2, Play, Sliders, Sparkles, TimerReset, Users, Volume2, VolumeX, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { GameCanvas } from '../game/GameCanvas';
 import type { GameResult, VerifiedRankInfo } from '../types';
@@ -18,6 +18,7 @@ export function GamePage() {
   const startVision = vision.start;
   const stopVision = vision.stop;
   const applyCalibration = vision.applyCalibration;
+  const applySensitivity = vision.applySensitivity;
   const [gameConfig] = useState<GameConfiguration>(() => localGameConfiguration.read());
   const [hud, setHud] = useState<GameHud>({
     score: 0,
@@ -52,9 +53,10 @@ export function GamePage() {
     startVision()
       .then(() => {
         applyCalibration(settings.calibrationResult!);
+        applySensitivity(settings.faceSensitivity || 1.0);
       })
       .catch((caught) => setError(describeVisionError(caught)));
-  }, [applyCalibration, navigate, profile.nickname, settings.calibrationResult, startVision]);
+  }, [applyCalibration, applySensitivity, navigate, profile.nickname, settings.calibrationResult, settings.faceSensitivity, startVision]);
 
   useEffect(() => () => stopVision(), [stopVision]);
 
@@ -183,6 +185,12 @@ export function GamePage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {trackingState.hasMultipleFaces && (
+              <div className="hidden items-center gap-1.5 border border-gold/30 bg-gold/10 px-2.5 py-1.5 font-inter text-xs text-gold sm:flex">
+                <Users size={13} />
+                <span>Target locked ({trackingState.faceCount} faces)</span>
+              </div>
+            )}
             <div
               className={`hidden items-center gap-2 border px-3 py-2 text-xs sm:flex ${
                 tracking ? 'border-cyan/20 bg-cyan/10 text-cyan' : 'border-gold/25 bg-gold/10 text-gold'
@@ -302,6 +310,37 @@ export function GamePage() {
                       />
                     </div>
 
+                    <div className="mt-3 border border-white/10 bg-white/[.04] p-3 text-left">
+                      <div className="flex items-center justify-between font-inter text-[.68rem] uppercase tracking-[.14em] text-white/60">
+                        <span className="flex items-center gap-1.5">
+                          <Sliders size={13} className="text-cyan" />
+                          Bite Sensitivity
+                        </span>
+                        <span className="font-mono text-cyan">
+                          {(settings.faceSensitivity || 1.0).toFixed(1)}x
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0.6"
+                        max="1.8"
+                        step="0.1"
+                        value={settings.faceSensitivity || 1.0}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          gameStore.updateSettings({ faceSensitivity: val });
+                          applySensitivity(val);
+                        }}
+                        className="mt-2 w-full accent-cyan"
+                        aria-label="Pause menu sensitivity"
+                      />
+                      <div className="mt-1 flex justify-between font-inter text-[0.55rem] uppercase text-white/35">
+                        <span>0.6x (Wide)</span>
+                        <span>1.0x (Balanced)</span>
+                        <span>1.8x (Subtle)</span>
+                      </div>
+                    </div>
+
                     <button className="arcade-button-primary mt-6 w-full" onClick={() => setPaused(false)}>
                       <Play size={17} /> Resume
                     </button>
@@ -369,6 +408,32 @@ export function GamePage() {
               </div>
               <div className="mt-4 min-h-10 text-sm text-white/65">
                 {activePowerUpLabel || 'Catch a power-up to light this panel.'}
+              </div>
+            </div>
+
+            {/* In-Game Sensitivity Tuning */}
+            <div className="arcade-card p-5">
+              <div className="flex items-center justify-between">
+                <div className="eyebrow">face sensitivity</div>
+                <span className="font-podium text-sm text-cyan">{(settings.faceSensitivity || 1.0).toFixed(1)}x</span>
+              </div>
+              <input
+                type="range"
+                min="0.6"
+                max="1.8"
+                step="0.1"
+                value={settings.faceSensitivity || 1.0}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  gameStore.updateSettings({ faceSensitivity: val });
+                  applySensitivity(val);
+                }}
+                className="mt-3 w-full accent-cyan"
+              />
+              <div className="mt-1 flex justify-between font-inter text-[.55rem] uppercase text-white/35">
+                <span>Wide bite</span>
+                <span>Balanced</span>
+                <span>Subtle bite</span>
               </div>
             </div>
 

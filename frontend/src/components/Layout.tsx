@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, Menu, Volume2, VolumeX, X } from 'lucide-react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Logo } from './Logo';
+import { KrmuBranding } from './KrmuBranding';
 import { gameStore, useGameStore } from '../store/gameStore';
 
 const backgroundVideo = 'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260606_154941_df1a96e1-a06f-450c-bd02-d863414cc1a0.mp4';
 const primaryItems = [
   { to: '/how-to-play', label: 'How to play' },
+  { to: '/photograph', label: 'Photograph' },
   { to: '/leaderboard', label: 'Leaderboard' },
 ];
 const secondaryItems = [
@@ -44,29 +46,129 @@ export function Layout() {
   if (location.pathname === '/') return <main><Outlet /></main>;
   const closeMenu = () => { setMenuOpen(false); window.setTimeout(() => menuButtonRef.current?.focus(), 0); };
 
-  return <div className="cinematic-shell relative min-h-[100svh] overflow-hidden bg-[#110d0b] text-white">
-    <video ref={videoRef} className="pointer-events-none absolute inset-0 h-full min-h-full w-full object-cover opacity-[.12]" autoPlay muted loop playsInline preload="metadata" aria-hidden="true"><source src={backgroundVideo} type="video/mp4" /></video>
-    <div className="pointer-events-none absolute inset-0 bg-[#110d0b]/80" aria-hidden="true" />
-    <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black/85" aria-hidden="true" />
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-black/50 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1600px] items-center justify-between px-6 py-5 sm:px-10 lg:px-16 lg:py-6">
-        <Link to="/" aria-label="Go to Chip Bite Challenge home"><Logo /></Link>
-        <nav className="hidden items-center gap-7 md:flex" aria-label="Primary navigation">
-          {primaryItems.map(({ to, label }) => <NavLink key={to} to={to} className={({ isActive }) => `font-inter text-[0.67rem] font-semibold uppercase tracking-[0.2em] transition ${isActive ? 'text-white' : 'text-white/55 hover:text-white'}`}>{label}</NavLink>)}
-          <Link className="font-inter text-[0.67rem] font-semibold uppercase tracking-[0.2em] text-white/55 transition hover:text-white" to="/#about">About</Link>
-          {secondaryItems.map(({ to, label }) => <NavLink key={to} to={to} className={({ isActive }) => `font-inter text-[0.67rem] font-semibold uppercase tracking-[0.2em] transition ${isActive ? 'text-white' : 'text-white/55 hover:text-white'}`}>{label}</NavLink>)}
-          <Link className="group ml-2 inline-flex items-center gap-3 border border-white/35 px-4 py-3 font-inter text-[0.67rem] font-bold uppercase tracking-[0.2em] transition hover:border-white hover:bg-white hover:text-black" to="/setup">Play now <ArrowUpRight size={15} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></Link>
-          <button className="border-l border-white/15 pl-5 text-white/65 transition hover:text-white" aria-label={settings.soundEnabled ? 'Mute sound' : 'Unmute sound'} onClick={() => gameStore.updateSettings({ soundEnabled: !settings.soundEnabled })}>{settings.soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}</button>
-        </nav>
-        <div className="flex items-center gap-3 md:hidden"><button className="text-white/70" aria-label={settings.soundEnabled ? 'Mute sound' : 'Unmute sound'} onClick={() => gameStore.updateSettings({ soundEnabled: !settings.soundEnabled })}>{settings.soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}</button><button ref={menuButtonRef} type="button" className="inline-flex h-10 w-10 items-center justify-center border border-white/25 text-white" aria-label="Open navigation menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu size={21} /></button></div>
+  return (
+    <div className="cinematic-shell relative min-h-[100svh] overflow-hidden bg-[#110d0b] text-white">
+      <video ref={videoRef} className="pointer-events-none absolute inset-0 h-full min-h-full w-full object-cover opacity-[.12]" autoPlay muted loop playsInline preload="metadata" aria-hidden="true"><source src={backgroundVideo} type="video/mp4" /></video>
+      <div className="pointer-events-none absolute inset-0 bg-[#110d0b]/80" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black/85" aria-hidden="true" />
+
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-black/50 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between px-6 py-5 sm:px-10 lg:px-16 lg:py-6">
+          <div className="flex items-center gap-4">
+            <Link to="/" aria-label="Go to Chip Bite Challenge home"><Logo /></Link>
+            <KrmuBranding variant="header" />
+          </div>
+
+          <nav className="hidden items-center gap-7 md:flex" aria-label="Primary navigation">
+            {primaryItems.map(({ to, label }) => (
+              <NavLink key={to} to={to} className={({ isActive }) => `font-inter text-[0.67rem] font-semibold uppercase tracking-[0.2em] transition ${isActive ? 'text-white' : 'text-white/55 hover:text-white'}`}>
+                {label}
+              </NavLink>
+            ))}
+            {secondaryItems.map(({ to, label }) => (
+              <NavLink key={to} to={to} className={({ isActive }) => `font-inter text-[0.67rem] font-semibold uppercase tracking-[0.2em] transition ${isActive ? 'text-white' : 'text-white/55 hover:text-white'}`}>
+                {label}
+              </NavLink>
+            ))}
+            <Link className="group ml-2 inline-flex items-center gap-3 border border-white/35 px-4 py-3 font-inter text-[0.67rem] font-bold uppercase tracking-[0.2em] transition hover:border-white hover:bg-white hover:text-black" to="/setup">
+              Play now <ArrowUpRight size={15} className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            </Link>
+            <button className="border-l border-white/15 pl-5 text-white/65 transition hover:text-white" aria-label={settings.soundEnabled ? 'Mute sound' : 'Unmute sound'} onClick={() => gameStore.updateSettings({ soundEnabled: !settings.soundEnabled })}>
+              {settings.soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
+            </button>
+          </nav>
+
+          <div className="flex items-center gap-3 md:hidden">
+            <button className="text-white/70" aria-label={settings.soundEnabled ? 'Mute sound' : 'Unmute sound'} onClick={() => gameStore.updateSettings({ soundEnabled: !settings.soundEnabled })}>
+              {settings.soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+            </button>
+            <button ref={menuButtonRef} type="button" className="inline-flex h-10 w-10 items-center justify-center border border-white/25 text-white" aria-label="Open navigation menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}>
+              <Menu size={21} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div role="dialog" aria-modal="true" aria-label="Site navigation" className={`fixed inset-0 z-50 bg-black/95 backdrop-blur-sm transition-[opacity,visibility] duration-500 md:hidden ${menuOpen ? 'visible opacity-100' : 'invisible opacity-0'}`} aria-hidden={!menuOpen}>
+        <div className="flex h-full flex-col px-6 py-5 sm:px-10">
+          <div className="flex items-center justify-between">
+            <Link to="/" aria-label="Go home" onClick={closeMenu}><Logo /></Link>
+            <button ref={closeButtonRef} type="button" className="inline-flex h-10 w-10 items-center justify-center border border-white/25" aria-label="Close navigation menu" onClick={closeMenu}>
+              <X size={21} />
+            </button>
+          </div>
+          <nav className="flex flex-1 flex-col justify-center gap-6" aria-label="Mobile navigation">
+            <Link className="font-podium text-4xl uppercase tracking-tight transition hover:text-white/55" to="/how-to-play" onClick={closeMenu}>
+              How to play
+            </Link>
+            <Link className="font-podium text-4xl uppercase tracking-tight transition hover:text-white/55" to="/photograph" onClick={closeMenu}>
+              Photograph Studio
+            </Link>
+            <Link className="font-podium text-4xl uppercase tracking-tight transition hover:text-white/55" to="/leaderboard" onClick={closeMenu}>
+              Leaderboard
+            </Link>
+            <Link className="font-podium text-4xl uppercase tracking-tight transition hover:text-white/55" to="/profile" onClick={closeMenu}>
+              Profile
+            </Link>
+            <Link className="font-podium text-4xl uppercase tracking-tight transition hover:text-white/55" to="/admin" onClick={closeMenu}>
+              Operator
+            </Link>
+            <Link className="mt-3 inline-flex w-fit items-center gap-3 border border-white/45 px-5 py-4 font-inter text-sm font-bold uppercase tracking-[0.2em] transition hover:bg-white hover:text-black" to="/setup" onClick={closeMenu}>
+              Play now <ArrowUpRight size={18} />
+            </Link>
+          </nav>
+          <div className="flex items-center justify-between font-inter text-[0.62rem] uppercase tracking-[0.2em] text-white/35">
+            <span>KRMU • Centre of Excellence in AI</span>
+            <span>Camera stays local</span>
+          </div>
+        </div>
       </div>
-    </header>
 
-    <div role="dialog" aria-modal="true" aria-label="Site navigation" className={`fixed inset-0 z-50 bg-black/95 backdrop-blur-sm transition-[opacity,visibility] duration-500 md:hidden ${menuOpen ? 'visible opacity-100' : 'invisible opacity-0'}`} aria-hidden={!menuOpen}>
-      <div className="flex h-full flex-col px-6 py-5 sm:px-10"><div className="flex items-center justify-between"><Link to="/" aria-label="Go home" onClick={closeMenu}><Logo /></Link><button ref={closeButtonRef} type="button" className="inline-flex h-10 w-10 items-center justify-center border border-white/25" aria-label="Close navigation menu" onClick={closeMenu}><X size={21} /></button></div><nav className="flex flex-1 flex-col justify-center gap-6" aria-label="Mobile navigation"><Link className="font-podium text-4xl uppercase tracking-tight transition hover:text-white/55" to="/how-to-play" onClick={closeMenu}>How to play</Link><Link className="font-podium text-4xl uppercase tracking-tight transition hover:text-white/55" to="/leaderboard" onClick={closeMenu}>Leaderboard</Link><Link className="font-podium text-4xl uppercase tracking-tight transition hover:text-white/55" to="/profile" onClick={closeMenu}>Profile</Link><Link className="font-podium text-4xl uppercase tracking-tight transition hover:text-white/55" to="/#about" onClick={closeMenu}>About</Link><Link className="mt-3 inline-flex w-fit items-center gap-3 border border-white/45 px-5 py-4 font-inter text-sm font-bold uppercase tracking-[0.2em] transition hover:bg-white hover:text-black" to="/setup" onClick={closeMenu}>Play now <ArrowUpRight size={18} /></Link></nav><div className="flex items-center justify-between font-inter text-[0.62rem] uppercase tracking-[0.2em] text-white/35"><span>Chip Bite Challenge</span><span>Camera stays local</span></div></div>
+      <main className="relative z-10"><Outlet /></main>
+
+      {!immersiveGame && (
+        <footer className="relative z-10 border-t border-white/10 bg-black/30 px-6 py-10 sm:px-10 lg:px-16">
+          <div className="mx-auto grid max-w-[1600px] gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+            <div>
+              <Logo />
+              <p className="mt-5 max-w-xs font-inter text-sm leading-6 text-white/45">
+                A cinematic, camera-powered arcade challenge built for quick rounds, loud reactions, and one more try.
+              </p>
+              <div className="mt-6">
+                <KrmuBranding variant="footer" />
+              </div>
+            </div>
+            <div>
+              <div className="font-inter text-[0.62rem] font-bold uppercase tracking-[0.2em] text-white/35">Explore</div>
+              <div className="mt-4 space-y-3 font-inter text-sm text-white/60">
+                <Link className="block hover:text-white" to="/how-to-play">How to play</Link>
+                <Link className="block hover:text-white" to="/photograph">Photograph Studio</Link>
+                <Link className="block hover:text-white" to="/leaderboard">Leaderboard</Link>
+                <Link className="block hover:text-white" to="/profile">Player profile</Link>
+              </div>
+            </div>
+            <div>
+              <div className="font-inter text-[0.62rem] font-bold uppercase tracking-[0.2em] text-white/35">Enter the arena</div>
+              <div className="mt-4 space-y-3 font-inter text-sm text-white/60">
+                <Link className="block hover:text-white" to="/setup">Start a round</Link>
+                <Link className="block hover:text-white" to="/photograph">Photo booth</Link>
+                <Link className="block hover:text-white" to="/setup">Camera setup</Link>
+                <Link className="block hover:text-white" to="/admin">Operator console</Link>
+              </div>
+            </div>
+            <div>
+              <div className="font-inter text-[0.62rem] font-bold uppercase tracking-[0.2em] text-white/35">Privacy & Security</div>
+              <p className="mt-4 font-inter text-sm leading-6 text-white/45">
+                Face landmarks and camera frames stay in your browser. Target validation ensures only the primary player is tracked.
+              </p>
+            </div>
+          </div>
+          <div className="mx-auto mt-10 flex max-w-[1600px] flex-col gap-2 border-t border-white/10 pt-5 font-inter text-[0.62rem] uppercase tracking-[0.16em] text-white/30 sm:flex-row sm:justify-between">
+            <span>Chip Bite Challenge • K.R. Mangalam University • Centre of Excellence in AI</span>
+            <span>Built for fast, friendly competition</span>
+          </div>
+        </footer>
+      )}
     </div>
-
-    <main className="relative z-10"><Outlet /></main>
-    {!immersiveGame && <footer className="relative z-10 border-t border-white/10 bg-black/30 px-6 py-10 sm:px-10 lg:px-16"><div className="mx-auto grid max-w-[1600px] gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr]"><div><Logo /><p className="mt-5 max-w-xs font-inter text-sm leading-6 text-white/45">A cinematic, camera-powered arcade challenge built for quick rounds, loud reactions, and one more try.</p></div><div><div className="font-inter text-[0.62rem] font-bold uppercase tracking-[0.2em] text-white/35">Explore</div><div className="mt-4 space-y-3 font-inter text-sm text-white/60"><Link className="block hover:text-white" to="/how-to-play">How to play</Link><Link className="block hover:text-white" to="/leaderboard">Leaderboard</Link><Link className="block hover:text-white" to="/profile">Player profile</Link></div></div><div><div className="font-inter text-[0.62rem] font-bold uppercase tracking-[0.2em] text-white/35">Enter the arena</div><div className="mt-4 space-y-3 font-inter text-sm text-white/60"><Link className="block hover:text-white" to="/setup">Start a round</Link><Link className="block hover:text-white" to="/setup">Camera setup</Link><Link className="block hover:text-white" to="/admin">Operator console</Link></div></div><div><div className="font-inter text-[0.62rem] font-bold uppercase tracking-[0.2em] text-white/35">Privacy</div><p className="mt-4 font-inter text-sm leading-6 text-white/45">Face landmarks and camera frames stay in your browser. Only completed result summaries can be sent to the configured API.</p></div></div><div className="mx-auto mt-10 flex max-w-[1600px] flex-col gap-2 border-t border-white/10 pt-5 font-inter text-[0.62rem] uppercase tracking-[0.16em] text-white/30 sm:flex-row sm:justify-between"><span>Chip Bite Challenge · 45-second arcade rounds</span><span>Built for fast, friendly competition</span></div></footer>}
-  </div>;
+  );
 }

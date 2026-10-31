@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { ArrowLeft, ArrowUpRight, Camera, Check, CheckCircle2, ChevronRight, Eye, Info, LoaderCircle, RefreshCw, ShieldCheck, Sparkles, Trash2, User, Volume2, VolumeX, XCircle } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Camera, Check, CheckCircle2, ChevronRight, Eye, Info, LoaderCircle, RefreshCw, ShieldCheck, Sliders, Sparkles, Trash2, User, Users, Volume2, VolumeX, XCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { gameStore, useGameStore } from '../store/gameStore';
 import { useWebcamVision } from '../vision/useWebcamVision';
@@ -33,8 +33,13 @@ export function SetupPage() {
   const vision = useWebcamVision(videoRef);
   const startVision = vision.start;
   const stopVision = vision.stop;
+  const applySensitivity = vision.applySensitivity;
 
   useEffect(() => () => stopVision(), [stopVision]);
+
+  useEffect(() => {
+    applySensitivity(settings.faceSensitivity || 1.0);
+  }, [applySensitivity, settings.faceSensitivity]);
 
   const captureFrame = useCallback(() => {
     const video = videoRef.current;
@@ -69,6 +74,7 @@ export function SetupPage() {
     setCameraError('');
     try {
       await startVision();
+      applySensitivity(settings.faceSensitivity || 1.0);
     } catch (caught) {
       setCameraError(describeVisionError(caught));
     }
@@ -169,15 +175,17 @@ export function SetupPage() {
     navigate('/game');
   };
 
-  const status = vision.message === 'ready'
+  const status = vision.state.hasMultipleFaces
+    ? `Target locked · ${vision.state.faceCount} faces detected`
+    : vision.message === 'ready'
     ? 'Tracking ready · move naturally'
     : vision.message === 'no-face'
-      ? 'Camera live · looking across the full frame'
-      : vision.message === 'multiple-faces'
-        ? 'One face at a time, please'
-        : vision.message === 'tracking-lost'
-          ? 'Reacquiring face signal'
-          : vision.message.replace('-', ' ');
+    ? 'Camera live · looking across the full frame'
+    : vision.message === 'multiple-faces'
+    ? 'Multiple faces · locking primary player'
+    : vision.message === 'tracking-lost'
+    ? 'Reacquiring face signal'
+    : vision.message.replace('-', ' ');
 
   const currentOpenness = vision.state.openness;
   const activeThreshold = vision.calibrationResult?.threshold ?? 0.28;
@@ -436,7 +444,10 @@ export function SetupPage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="eyebrow">camera station</div>
-                <h2 className="font-podium mt-2 text-2xl uppercase text-white">{status}</h2>
+                <h2 className="font-podium mt-2 flex items-center gap-2 text-2xl uppercase text-white">
+                  {vision.state.hasMultipleFaces && <Users size={20} className="shrink-0 text-gold" />}
+                  {status}
+                </h2>
               </div>
               <div className={`h-3 w-3 rounded-full ${vision.state.reliable ? 'bg-cyan shadow-[0_0_12px_#50e3ff]' : 'bg-white/20'}`} />
             </div>
@@ -536,6 +547,36 @@ export function SetupPage() {
                   {vision.calibrationResult
                     ? `Calibration ready · threshold ${vision.calibrationResult.threshold.toFixed(3)}`
                     : 'Calibration required before play'}
+                </div>
+              )}
+
+              {vision.modelReady && (
+                <div className="mt-3 border border-white/10 bg-white/[.03] p-3 text-left">
+                  <div className="flex items-center justify-between font-inter text-[.68rem] uppercase tracking-[.14em] text-white/60">
+                    <span className="flex items-center gap-1.5">
+                      <Sliders size={13} className="text-cyan" />
+                      Face & Bite Sensitivity
+                    </span>
+                    <span className="font-mono text-cyan">{(settings.faceSensitivity || 1.0).toFixed(1)}x</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.6"
+                    max="1.8"
+                    step="0.1"
+                    value={settings.faceSensitivity || 1.0}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      gameStore.updateSettings({ faceSensitivity: val });
+                      applySensitivity(val);
+                    }}
+                    className="mt-2 w-full accent-cyan"
+                  />
+                  <div className="mt-1 flex justify-between font-inter text-[.55rem] uppercase text-white/35">
+                    <span>Low (0.6x)</span>
+                    <span>Standard (1.0x)</span>
+                    <span>High (1.8x)</span>
+                  </div>
                 </div>
               )}
             </div>

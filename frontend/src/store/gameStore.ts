@@ -54,6 +54,7 @@ let state: StoreState = {
     soundVolume: initialSoundVolume,
     musicEnabled: storedSettings.musicEnabled ?? false,
     reducedMotion: storedSettings.reducedMotion ?? false,
+    faceSensitivity: storedSettings.faceSensitivity ?? 1.0,
     calibrationResult: storedSettings.calibrationResult ?? null,
   },
   profile: read<PlayerProfile>('cbc-profile', fallbackProfile),

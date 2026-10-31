@@ -18,6 +18,9 @@ export interface MouthTrackingState {
   confidence: number;
   mirrored: boolean;
   timestamp: number;
+  faceCount?: number;
+  hasMultipleFaces?: boolean;
+  targetValidated?: boolean;
 }
 
 export interface CalibrationResult {
@@ -99,6 +102,7 @@ export interface GameSettings {
   soundVolume: number;
   musicEnabled: boolean;
   reducedMotion: boolean;
+  faceSensitivity?: number;
   calibrationResult: CalibrationResult | null;
 }
 
